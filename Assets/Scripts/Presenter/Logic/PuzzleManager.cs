@@ -206,8 +206,8 @@ public class PuzzleManager
 
             int randomIdx = UnityEngine.Random.Range(0, _tsumData.TsumEntities.Length);
             int tsumId = _tsumData.TsumEntities[randomIdx].TsumID;
-            Tsum newTsum = _tsumSpawner.SpawnTsum(tsumId);
-            RegisterTsum(newTsum);
+            // Tsum newTsum = _tsumSpawner.SpawnTsum(tsumId);
+            // RegisterTsum(newTsum);
         }
 
         int score = chainToResolve.Count * 100;

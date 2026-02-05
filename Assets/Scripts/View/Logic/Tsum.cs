@@ -1,5 +1,6 @@
 using UnityEngine;
 using UniRx;
+using UnityEngine.Pool;
 using DG.Tweening;
 
 public class Tsum : MonoBehaviour
@@ -17,12 +18,19 @@ public class Tsum : MonoBehaviour
     public bool IsDeleting => _isDeleting;
 
     private string _tsumName;
+    private Vector3 _initialScale;
     private GameUIView _gameUIView;
     private Color _tsumColor;
     private Color _highlightColor;
     private Sprite _tsumSprite;
     private SpriteRenderer _spriteRenderer;
     private SpriteRenderer _highlightSpriteRenderer;
+    private IObjectPool<Tsum> _pool;
+
+    private void Awake()
+    {
+        _initialScale = transform.localScale;
+    }
 
     public void Initialize(
         int tsumID,
@@ -30,7 +38,8 @@ public class Tsum : MonoBehaviour
         GameUIView gameUIView,
         Sprite tsumSprite,
         Color tsumColor,
-        Color highlightColor
+        Color highlightColor,
+        IObjectPool<Tsum> pool
     )
     {
         _tsumID = tsumID;
@@ -39,6 +48,7 @@ public class Tsum : MonoBehaviour
         _tsumSprite = tsumSprite;
         _tsumColor = tsumColor;
         _highlightColor = highlightColor;
+        _pool = pool;
 
         _spriteRenderer = _tsumSpriteObject.GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null && _tsumSprite != null)
@@ -52,12 +62,22 @@ public class Tsum : MonoBehaviour
         {
             _highlightSpriteRenderer.color = _highlightColor;
         }
+
+        ResetState();
     }
 
     public void DeleteTsum()
     {
         OnDeleted();
-        Destroy(gameObject);
+
+        if (_pool != null)
+        {
+            _pool.Release(this);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void SetDeleting()
@@ -92,6 +112,7 @@ public class Tsum : MonoBehaviour
     public void PlaySelectedAnimation()
     {
         _tsumSpriteObject.transform.DOKill();
+        _tsumSpriteObject.transform.localScale = Vector3.one;
         _tsumSpriteObject.transform.DOScale(1.2f, 0.1f).SetLoops(2, LoopType.Yoyo);
     }
 
@@ -126,5 +147,30 @@ public class Tsum : MonoBehaviour
     public void OnDeleted()
     {
 
+    }
+
+    private void ResetState()
+    {
+        _isConnected = false;
+        _isDeleting = false;
+
+        var rigidBody = GetComponent<Rigidbody2D>();
+        if (rigidBody != null)
+        {
+            rigidBody.bodyType = RigidbodyType2D.Dynamic;
+            rigidBody.linearVelocity = Vector2.zero;
+            rigidBody.angularVelocity = 0f;
+        }
+
+        transform.localScale = _initialScale;
+        transform.rotation = Quaternion.identity;
+
+        if (_tsumSpriteObject != null)
+        {
+            _tsumSpriteObject.transform.localScale = Vector3.one;
+        }
+
+        HighlightTsum(false);
+        OutlineTsum(false);
     }
 }
