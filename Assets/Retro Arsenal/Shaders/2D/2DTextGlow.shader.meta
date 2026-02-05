@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 8da2eb423bc5a0f49907ff881cbafbae
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _PanningTexture: {fileID: 2800000, guid: 4d64936f26b0b0e458f06562c1064b59, type: 3}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
