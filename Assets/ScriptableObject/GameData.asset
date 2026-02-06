@@ -12,10 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a9717a3828451049aa5e50217e30b0c, type: 3}
   m_Name: GameData
   m_EditorClassIdentifier: 
-  MaxTsumNum: 60
+  InitialTsumCount: 20
   MaxSkillPoint: 100
   MaxFeverPoint: 30
-  MaxTime: 60
+  GameOverGraceTime: 3
+  InitialSpawnInterval: 5
+  MinSpawnInterval: 0.1
+  SpawnIntervalDecrement: 0.1
+  MaxSpawnTsumLevelIndex: 0
   TsumConnectDistance: 1.15
   MinChainCountToClear: 3
   ChainClearInterval: 0.15
+  FeverGainPerTsum: 1
+  FeverDecreasePerSecond: 10
+  TimeGainWhenFever: 5

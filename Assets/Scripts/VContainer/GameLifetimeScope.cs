@@ -1,6 +1,11 @@
 using VContainer;
 using VContainer.Unity;
 using UnityEngine;
+using Model;
+using Model.Logic;
+using Model.Interface;
+using View.Logic;
+using Presenter;
 
 // GameInitializer の代わりになる「設定ファイル」
 public class GameLifetimeScope : LifetimeScope
@@ -16,21 +21,26 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private InputEventHandler _inputEventHandler;
     [SerializeField] private GameDebugView _gameDebugView;
     [SerializeField] private ChainLineHandler _chainLineHandler;
+    [SerializeField] private GameOverZone _gameOverZone;
 
     protected override void Configure(IContainerBuilder builder)
     {
-        // 1. データの登録 (Instanceとしてそのまま渡す)
         builder.RegisterInstance(_gameData);
         builder.RegisterInstance(_tsumData);
 
-        // 2. Component (View) の登録
         builder.RegisterComponent(_gameUIView);
-        builder.RegisterComponent(_tsumSpawner);
+
         builder.RegisterComponent(_readyAnimationEvent);
         builder.RegisterComponent(_inputEventHandler);
-        builder.RegisterComponent(_chainLineHandler);
 
-        // 3. Logic / Model の登録 (Pure C#クラス)
+        // インターフェースとして登録
+        builder.RegisterComponent(_tsumSpawner).AsImplementedInterfaces().AsSelf();
+        builder.RegisterComponent(_chainLineHandler).AsImplementedInterfaces().AsSelf();
+
+        if (_gameOverZone != null)
+        {
+            builder.RegisterComponent(_gameOverZone);
+        }
 
         // Model
         builder.Register<GameModel>(Lifetime.Singleton);
@@ -40,7 +50,7 @@ public class GameLifetimeScope : LifetimeScope
 
         // Manager
         builder.Register<ChainManager>(Lifetime.Singleton);
-        builder.Register<TimeManager>(Lifetime.Singleton);
+        builder.Register<TimeTsumSpawnManager>(Lifetime.Singleton);
         builder.Register<PuzzleManager>(Lifetime.Singleton);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -51,8 +61,7 @@ public class GameLifetimeScope : LifetimeScope
         }
 #endif
 
-        // 4. Presenter (EntryPoint) の登録
-        // GamePresenter は「起動役」なので EntryPoint として登録する
+        // Presenter
         builder.RegisterEntryPoint<GamePresenter>(Lifetime.Singleton);
     }
 }

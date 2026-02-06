@@ -3,18 +3,21 @@ using UniRx;
 using TMPro;
 using System;
 
-public class ReadyAnimationEvent : MonoBehaviour
+namespace View.Logic
 {
-    private readonly Subject<Unit> _onReady = new Subject<Unit>();
-    public IObservable<Unit> OnReady => _onReady;
-
-    public void UpdateReadyToGo(string text)
+    public class ReadyAnimationEvent : MonoBehaviour
     {
-        var textComponent = GetComponent<TextMeshProUGUI>();
-        if (textComponent != null)
+        private readonly Subject<Unit> _onReady = new Subject<Unit>();
+        public IObservable<Unit> OnReady => _onReady;
+
+        public void UpdateReadyToGo(string text)
         {
-            textComponent.text = text;
-            _onReady.OnNext(Unit.Default);
+            var textComponent = GetComponent<TextMeshProUGUI>();
+            if (textComponent != null)
+            {
+                textComponent.text = text;
+                _onReady.OnNext(Unit.Default);
+            }
         }
     }
 }

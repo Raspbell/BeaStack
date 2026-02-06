@@ -3,13 +3,12 @@ using VContainer.Unity;
 using UniRx;
 using UnityEngine.SceneManagement;
 using System;
+using Model;
 
 public class GameDebugPresenter : IStartable, IDisposable
 {
     private readonly GameDebugView _view;
     private readonly GameModel _model;
-
-    // private readonly TimeManager _timeManager; 
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
