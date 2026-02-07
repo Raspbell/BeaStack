@@ -9,7 +9,7 @@ using System.Linq;
 using Model;
 using Model.Logic;
 using Model.Interface;
-using View.Logic;
+using View;
 
 namespace Presenter
 {
@@ -42,6 +42,7 @@ namespace Presenter
             ChainManager chainManager,
             TimeTsumSpawnManager timeManager,
             PuzzleManager puzzleManager,
+            PuzzleRule puzzleRule,
             GameUIView gameUIView,
             TsumSpawner tsumSpawner,
             InputEventHandler inputEventHandler,
@@ -56,6 +57,7 @@ namespace Presenter
             _chainManager = chainManager;
             _timeManager = timeManager;
             _puzzleManager = puzzleManager;
+            _puzzleRule = puzzleRule;
             _gameUIView = gameUIView;
             _tsumSpawner = tsumSpawner;
             _inputEventHandler = inputEventHandler;
@@ -77,7 +79,7 @@ namespace Presenter
             }
 
             BindGameState();
-            BindModelUpdate();
+            BindModelDataUpdate();
             BindViewUpdate();
             BindGameOverZone();
 
@@ -98,10 +100,11 @@ namespace Presenter
 
             if (_timeManager.Tick(Time.deltaTime))
             {
-                ITsum newTsum = _tsumSpawner.SpawnRandomFallingTsum(_gameData.MaxSpawnTsumLevelIndex);
+                int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
+                ITsumView newTsum = _tsumSpawner.SpawnTsumAtRandom(randomTsumId);
                 if (newTsum != null)
                 {
-                    _puzzleManager.RegisterTsum(newTsum);
+                    _puzzleManager.RegisterTsum(randomTsumId, newTsum);
                 }
 
             }
@@ -134,7 +137,7 @@ namespace Presenter
                 .AddTo(_disposables);
         }
 
-        private void BindModelUpdate()
+        private void BindModelDataUpdate()
         {
             _gameModel.Score
                 .DistinctUntilChanged()
@@ -163,13 +166,10 @@ namespace Presenter
                 .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
                 .Subscribe(_ =>
                 {
-                    Tsum firstTsum = _inputEventHandler.SelectTsum();
-                    if (firstTsum != null && !firstTsum.IsDeleting)
+                    TsumView firstTsumView = _inputEventHandler.SelectTsum();
+                    if (firstTsumView != null)
                     {
-                        _chainManager.AddTsumToChain(firstTsum);
-                        firstTsum.OnSelected();
-                        _puzzleManager.OnSelectionStart(firstTsum);
-                        _puzzleManager.UpdateSelectableHighlight();
+                        _puzzleManager.TryConnectTsum(firstTsumView);
                     }
                 })
                 .AddTo(_disposables);
@@ -182,11 +182,15 @@ namespace Presenter
                     _puzzleManager.UpdateSelectableHighlight();
                 })
                 .AddTo(_disposables);
+
         }
 
         private void BindGameOverZone()
         {
-            if (_gameOverZone == null) return;
+            if (_gameOverZone == null)
+            {
+                return;
+            }
 
             _gameOverZone.OnGameOver
                 .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
@@ -201,60 +205,22 @@ namespace Presenter
         {
             for (int i = 0; i < _gameData.InitialTsumCount; i++)
             {
-                ITsum newTsum = _tsumSpawner.SpawnRandomFallingTsum(_gameData.MaxSpawnTsumLevelIndex);
-                if (newTsum != null)
+                int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
+                ITsumView newTsumView = _tsumSpawner.SpawnTsumAtRandom(_gameData.MaxSpawnTsumLevelIndex);
+                if (newTsumView != null)
                 {
-                    _puzzleManager.RegisterTsum(newTsum);
+                    _puzzleManager.RegisterTsum(randomTsumId, newTsumView);
                 }
             }
         }
 
         private void SelectTsum()
         {
-            if (_chainManager.CurrentChain.Count == 0)
+            ITsumView selectedTsumView = _inputEventHandler.SelectTsum();
+
+            if (selectedTsumView != null)
             {
-                return;
-            }
-
-            Tsum selectedTsum = _inputEventHandler.SelectTsum();
-
-            if (selectedTsum != null && selectedTsum.IsDeleting)
-            {
-                return;
-            }
-
-            if (selectedTsum != null && _puzzleManager.CurrentSelectingTsumID == selectedTsum.TsumID)
-            {
-                if (_chainManager.CurrentChain.Count >= 2)
-                {
-                    ITsum previousTsum = _chainManager.CurrentChain[^2];
-
-                    if (previousTsum == (ITsum)selectedTsum)
-                    {
-                        ITsum tipTsum = _chainManager.CurrentChain.Last();
-                        _chainManager.RemoveLastTsumFromChain();
-                        _chainLineHandler.UpdateLine(_chainManager.CurrentChain);
-                        tipTsum.OnUnselected();
-                        return;
-                    }
-                }
-
-                if (_chainManager.CurrentChain.Last() == (ITsum)selectedTsum)
-                {
-                    return;
-                }
-
-                if (_chainManager.CurrentChain.Contains((ITsum)selectedTsum))
-                {
-                    return;
-                }
-
-                if (_puzzleManager.CanConnectTsums(selectedTsum))
-                {
-                    _chainManager.AddTsumToChain(selectedTsum);
-                    _chainLineHandler.UpdateLine(_chainManager.CurrentChain);
-                    selectedTsum.OnSelected();
-                }
+                _puzzleManager.TryConnectTsum(selectedTsumView);
             }
         }
 

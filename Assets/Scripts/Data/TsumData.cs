@@ -4,13 +4,13 @@ using System.Collections.Generic; // Dictionaryのために必要
 [CreateAssetMenu(fileName = "TsumData", menuName = "Game/TsumData")]
 public class TsumData : ScriptableObject
 {
-    public TsumEntity[] TsumEntities;
+    public TsumComponent[] TsumEntities;
 
     [System.NonSerialized]
-    private Dictionary<int, TsumEntity> _idToEntityMap;
+    private Dictionary<int, TsumComponent> _idToEntityMap;
 
     [System.Serializable]
-    public class TsumEntity
+    public class TsumComponent
     {
         public int TsumID;
         public string TsumName;
@@ -20,16 +20,16 @@ public class TsumData : ScriptableObject
         public Color HighlightColor;
     }
 
-    public TsumEntity GetTsumEntityById(int tsumId)
+    public TsumComponent GetTsumComponentById(int tsumId)
     {
         if (_idToEntityMap == null)
         {
             InitializeLookupDict();
         }
 
-        if (_idToEntityMap.TryGetValue(tsumId, out var entity))
+        if (_idToEntityMap.TryGetValue(tsumId, out var component))
         {
-            return entity;
+            return component;
         }
 
         Debug.LogWarning($"TsumData: ID {tsumId} が見つかりませんでした。");
@@ -38,7 +38,7 @@ public class TsumData : ScriptableObject
 
     private void InitializeLookupDict()
     {
-        _idToEntityMap = new Dictionary<int, TsumEntity>();
+        _idToEntityMap = new Dictionary<int, TsumComponent>();
 
         foreach (var entity in TsumEntities)
         {

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
-namespace View.Logic
+namespace View
 {
     public class GameUIView : MonoBehaviour
     {

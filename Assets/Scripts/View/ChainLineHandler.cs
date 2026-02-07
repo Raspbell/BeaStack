@@ -4,14 +4,14 @@ using DG.Tweening;
 using Model.Interface;
 using System.Linq;
 
-namespace View.Logic
+namespace View
 {
     public class ChainLineHandler : MonoBehaviour, IChainLineHandler
     {
         [SerializeField] private LineRenderer _linePrefab;
 
         private LineRenderer _currentLine;
-        private List<ITsum> _trackingTsums;
+        private List<ITsumView> _trackingTsums;
 
         private void Awake()
         {
@@ -41,7 +41,7 @@ namespace View.Logic
             }
         }
 
-        public void UpdateLine(IEnumerable<ITsum> chainTsums)
+        public void UpdateLine(IEnumerable<ITsumView> chainTsums)
         {
             if (_currentLine == null)
             {

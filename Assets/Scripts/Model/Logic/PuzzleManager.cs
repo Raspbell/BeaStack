@@ -14,16 +14,17 @@ namespace Model.Logic
         private GameData _gameData;
         private TsumData _tsumData;
 
-        // インターフェースに変更
         private ITsumSpawner _tsumSpawner;
         private IChainLineHandler _chainLineHandler;
 
-        // リストの中身を ITsum に変更
-        private readonly List<ITsum> _allTsums = new List<ITsum>();
-        public List<ITsum> AllTsums => _allTsums;
+        private readonly List<TsumEntity> _allTsumEntity = new List<TsumEntity>();
+        public List<TsumEntity> AllTsums => _allTsumEntity;
 
-        private ITsum _lastSelectedTsum;
-        public ITsum LastSelectedTsum => _lastSelectedTsum;
+        private readonly Dictionary<ITsumView, TsumEntity> _viewToEntityMap = new Dictionary<ITsumView, TsumEntity>();
+        public Dictionary<ITsumView, TsumEntity> ViewToEntityMap => _viewToEntityMap;
+
+        private TsumEntity _lastSelectedTsum;
+        public TsumEntity LastSelectedTsum => _lastSelectedTsum;
 
         private int _currentSelectingTsumID = -1;
         public int CurrentSelectingTsumID
@@ -38,6 +39,7 @@ namespace Model.Logic
             get { return _isSelectionActive; }
             set { _isSelectionActive = value; }
         }
+
 
         public PuzzleManager
         (
@@ -59,11 +61,27 @@ namespace Model.Logic
             _chainLineHandler = chainLineHandler;
         }
 
-        public void OnSelectionStart(ITsum firstTsum)
+        public void RegisterTsum(int tsumID, ITsumView tsumView)
+        {
+            if (tsumView == null)
+            {
+                return;
+            }
+
+            var entity = new TsumEntity(tsumID, tsumView);
+
+            _allTsumEntity.Add(entity);
+            _viewToEntityMap[tsumView] = entity;
+        }
+
+        public void OnSelectionStart(TsumEntity firstTsum)
         {
             _currentSelectingTsumID = firstTsum.TsumID;
             _isSelectionActive = true;
             _lastSelectedTsum = firstTsum;
+            _chainManager.AddTsumToChain(firstTsum);
+            firstTsum.OnSelected();
+            UpdateLine();
         }
 
         public void OnSelectionEnd()
@@ -74,7 +92,6 @@ namespace Model.Logic
 
             TurnOffAllHighlights();
 
-            // ITsum のリストとして取得
             var currentChain = _chainManager.CurrentChain.ToList();
             _chainManager.ClearChain();
 
@@ -94,12 +111,7 @@ namespace Model.Logic
             }
         }
 
-        public void RegisterTsum(ITsum tsum)
-        {
-            _allTsums.Add(tsum);
-        }
-
-        public bool CanConnectTsums(ITsum tsum)
+        public bool CanConnectTsums(TsumEntity tsum)
         {
             if (_currentSelectingTsumID != tsum.TsumID)
             {
@@ -109,9 +121,59 @@ namespace Model.Logic
             {
                 return false;
             }
-            ITsum lastTsum = _chainManager.CurrentChain.Last();
+            TsumEntity lastTsum = _chainManager.CurrentChain.Last();
 
             return _puzzleRule.CanConnectTsums(lastTsum.Position, tsum.Position);
+        }
+
+        public void TryConnectTsum(ITsumView touchedTsumView)
+        {
+            if (touchedTsumView == null)
+            {
+                return;
+            }
+
+            if (!_viewToEntityMap.TryGetValue(touchedTsumView, out TsumEntity entity))
+            {
+                return;
+            }
+
+            if (!IsSelectionActive)
+            {
+                OnSelectionStart(entity);
+                UpdateSelectableHighlight();
+                return;
+            }
+
+            if (entity.IsDeleting) return;
+            if (CurrentSelectingTsumID != entity.TsumID) return;
+
+            var chain = _chainManager.CurrentChain;
+            if (chain.Count >= 2 && chain[chain.Count - 2] == entity)
+            {
+                var tip = chain.Last();
+                _chainManager.RemoveLastTsumFromChain();
+                tip.OnUnselected();
+                UpdateLine();
+                return;
+            }
+
+            if (!chain.Contains(entity) && CanConnectTsums(entity))
+            {
+                _chainManager.AddTsumToChain(entity);
+                entity.OnSelected();
+                UpdateLine();
+            }
+        }
+
+        private void UpdateLine()
+        {
+            List<ITsumView> viewList = new List<ITsumView>();
+            foreach (var entity in _chainManager.CurrentChain)
+            {
+                viewList.Add(entity.TsumView);
+            }
+            _chainLineHandler.UpdateLine(viewList);
         }
 
         public void UpdateSelectableHighlight()
@@ -124,29 +186,29 @@ namespace Model.Logic
 
             TurnOffAllHighlights();
 
-            ITsum startNode = _chainManager.CurrentChain.Last();
-            HashSet<ITsum> visited = new HashSet<ITsum>(_chainManager.CurrentChain);
-            Queue<ITsum> queue = new Queue<ITsum>();
+            TsumEntity startNode = _chainManager.CurrentChain.Last();
+            HashSet<TsumEntity> visited = new HashSet<TsumEntity>(_chainManager.CurrentChain);
+            Queue<TsumEntity> queue = new Queue<TsumEntity>();
             queue.Enqueue(startNode);
 
             while (queue.Count > 0)
             {
-                ITsum current = queue.Dequeue();
+                TsumEntity current = queue.Dequeue();
 
-                foreach (var neighbor in _allTsums)
+                foreach (var neighborEntity in _allTsumEntity)
                 {
-                    if (visited.Contains(neighbor))
+                    if (visited.Contains(neighborEntity))
                     {
                         continue;
                     }
 
-                    if (neighbor.TsumID == _currentSelectingTsumID &&
-                        !neighbor.IsDeleting &&
-                        _puzzleRule.CanConnectTsums(current.Position, neighbor.Position))
+                    if (neighborEntity.TsumID == _currentSelectingTsumID &&
+                        !neighborEntity.IsDeleting &&
+                        _puzzleRule.CanConnectTsums(current.Position, neighborEntity.Position))
                     {
-                        visited.Add(neighbor);
-                        queue.Enqueue(neighbor);
-                        neighbor.HighlightTsum(true);
+                        visited.Add(neighborEntity);
+                        queue.Enqueue(neighborEntity);
+                        neighborEntity.SetHighlight(true);
                     }
                 }
             }
@@ -154,34 +216,34 @@ namespace Model.Logic
 
         public void TurnOffAllHighlights()
         {
-            foreach (var tsum in _allTsums)
+            foreach (var tsumEntity in _allTsumEntity)
             {
-                if (tsum != null)
+                if (tsumEntity != null)
                 {
-                    tsum.HighlightTsum(false);
+                    tsumEntity.SetHighlight(false);
                 }
             }
         }
 
-        public List<ITsum> FindSelectableTsums(ITsum lastSelectedTsum)
+        public List<TsumEntity> FindSelectableTsums(TsumEntity lastSelectedTsum)
         {
-            List<ITsum> selectableTsums = new List<ITsum>();
-            foreach (ITsum tsum in _allTsums)
+            List<TsumEntity> selectableTsums = new List<TsumEntity>();
+            foreach (TsumEntity tsumEntity in _allTsumEntity)
             {
-                if (tsum == lastSelectedTsum)
+                if (tsumEntity == lastSelectedTsum)
                 {
                     continue;
                 }
 
-                if (_puzzleRule.CanConnectTsums(lastSelectedTsum.Position, tsum.Position))
+                if (_puzzleRule.CanConnectTsums(lastSelectedTsum.Position, tsumEntity.Position))
                 {
-                    selectableTsums.Add(tsum);
+                    selectableTsums.Add(tsumEntity);
                 }
             }
             return selectableTsums;
         }
 
-        public async UniTask ResolveChain(List<ITsum> chainToResolve)
+        public async UniTask ResolveChain(List<TsumEntity> chainToResolve)
         {
             if (chainToResolve.Count == 0)
             {
@@ -189,49 +251,55 @@ namespace Model.Logic
             }
 
             int currentTsumID = chainToResolve[0].TsumID;
-            ITsum lastTsum = chainToResolve.Last();
+            TsumEntity lastTsum = chainToResolve.Last();
             Vector3 evolvePosition = lastTsum.Position;
 
-            foreach (var tsum in chainToResolve)
+            foreach (var tsumEntity in chainToResolve)
             {
-                if (tsum != null)
+                if (tsumEntity != null)
                 {
-                    tsum.SetDeleting();
+                    tsumEntity.SetDeleting();
                 }
             }
 
             for (int i = 0; i < chainToResolve.Count; i++)
             {
-                ITsum tsum = chainToResolve[i];
-                if (tsum != null && tsum.GameObject != null)
+                TsumEntity tsumEntity = chainToResolve[i];
+                ITsumView tsumView = tsumEntity?.TsumView;
+                if (tsumEntity != null)
                 {
-                    tsum.PlayDeletedAnimation();
+                    tsumView.PlayDeletedAnimation();
                 }
                 await UniTask.Delay((int)(_gameData.ChainClearInterval * 1000));
             }
 
             for (int i = 0; i < chainToResolve.Count; i++)
             {
-                ITsum tsumToDelete = chainToResolve[i];
-                if (tsumToDelete == null)
+                TsumEntity tsumEntityToDelete = chainToResolve[i];
+                if (tsumEntityToDelete == null)
                 {
                     continue;
                 }
 
-                _allTsums.Remove(tsumToDelete);
-                tsumToDelete.DeleteTsum();
+                if (tsumEntityToDelete.TsumView != null)
+                {
+                    _viewToEntityMap.Remove(tsumEntityToDelete.TsumView);
+                }
+
+                _allTsumEntity.Remove(tsumEntityToDelete);
+                tsumEntityToDelete.DeleteTsum();
             }
 
-            // 進化処理
             int nextTsumID = GetNextLevelTsumID(currentTsumID);
 
             if (nextTsumID != -1)
             {
-                ITsum newTsum = _tsumSpawner.SpawnTsumAt(nextTsumID, evolvePosition);
-                if (newTsum != null)
+                ITsumView newTsumView = _tsumSpawner.SpawnTsum(nextTsumID, evolvePosition);
+                TsumEntity newTsumEntity = new TsumEntity(nextTsumID, newTsumView);
+                if (newTsumView != null)
                 {
-                    RegisterTsum(newTsum);
-                    newTsum.PlaySelectedAnimation();
+                    RegisterTsum(nextTsumID, newTsumView);
+                    newTsumView.PlaySelectedAnimation();
                 }
             }
 

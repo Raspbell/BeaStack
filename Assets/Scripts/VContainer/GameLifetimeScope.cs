@@ -3,8 +3,7 @@ using VContainer.Unity;
 using UnityEngine;
 using Model;
 using Model.Logic;
-using Model.Interface;
-using View.Logic;
+using View;
 using Presenter;
 
 // GameInitializer の代わりになる「設定ファイル」

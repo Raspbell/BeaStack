@@ -168,7 +168,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   _gameData: {fileID: 11400000, guid: 2606dc069c603034cb1452a7243799e1, type: 2}
-  _tsumData: {fileID: 11400000, guid: 32a80a482be617242a64fc906b2183b2, type: 2}
+  _tsumData: {fileID: 11400000, guid: 8047dbcd1fea26d4cbc155c5f04fd09f, type: 2}
   _gameUIView: {fileID: 1245001171}
   _tsumSpawner: {fileID: 613705837}
   _readyAnimationEvent: {fileID: 255612811}

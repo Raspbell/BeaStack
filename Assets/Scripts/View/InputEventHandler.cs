@@ -2,7 +2,7 @@ using UnityEngine;
 using UniRx;
 using System;
 
-namespace View.Logic
+namespace View
 {
     public class InputEventHandler : MonoBehaviour
     {
@@ -30,12 +30,12 @@ namespace View.Logic
             }
         }
 
-        public Tsum SelectTsum()
+        public TsumView SelectTsum()
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
-            Tsum tsum = hit.collider?.GetComponent<Tsum>();
+            TsumView tsum = hit.collider?.GetComponent<TsumView>();
             return tsum;
         }
     }

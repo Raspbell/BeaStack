@@ -22,6 +22,16 @@ namespace Model.Logic
             return distance <= TsumConnectDistance;
         }
 
+        public int GetRandomTsumID(int maxLevelIndex, TsumData tsumData)
+        {
+            int randomIdx = Random.Range(0, maxLevelIndex + 1);
+            if (randomIdx >= tsumData.TsumEntities.Length)
+            {
+                randomIdx = 0;
+            }
+            return tsumData.TsumEntities[randomIdx].TsumID;
+        }
+
         public void AddChainScore(int chainLength, int tsumScore, bool isFever)
         {
             if (chainLength < MinChainCountToClear)

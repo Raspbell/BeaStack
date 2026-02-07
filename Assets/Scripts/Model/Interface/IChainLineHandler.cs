@@ -4,7 +4,7 @@ namespace Model.Interface
 {
     public interface IChainLineHandler
     {
-        void UpdateLine(IEnumerable<ITsum> chainTsums);
+        void UpdateLine(IEnumerable<ITsumView> chainTsums);
         void FixLineAndFadeOut(float duration);
     }
 }

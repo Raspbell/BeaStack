@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using UnityEngine.Pool;
 using Model.Interface;
 
-namespace View.Logic
+namespace View
 {
     public class TsumSpawner : MonoBehaviour, ITsumSpawner
     {
         [SerializeField] private BoxCollider2D _spawnArea;
-        [SerializeField] private Tsum _tsumPrefab;
+        [SerializeField] private TsumView _tsumPrefab;
 
         [SerializeField] private int _defaultCapacity = 50;
         [SerializeField] private int _maxSize = 100;
 
         private TsumData _tsumData;
         private GameUIView _gameUIView;
-        private IObjectPool<Tsum> _tsumPool;
+        private IObjectPool<TsumView> _tsumPool;
 
         public void Initialize(TsumData tsumData, GameUIView gameUIView)
         {
             _tsumData = tsumData;
             _gameUIView = gameUIView;
 
-            _tsumPool = new ObjectPool<Tsum>(
+            _tsumPool = new ObjectPool<TsumView>(
                 createFunc: CreateTsum,
                 actionOnGet: OnGetTsum,
                 actionOnRelease: OnReleaseTsum,
@@ -33,7 +33,7 @@ namespace View.Logic
             );
         }
 
-        public ITsum SpawnTsum(int tsumId)
+        public ITsumView SpawnTsumAtRandom(int tsumId)
         {
             if (tsumId < 0)
             {
@@ -45,79 +45,56 @@ namespace View.Logic
                 Random.Range(_spawnArea.bounds.min.y, _spawnArea.bounds.max.y)
             );
 
-            Tsum tsum = _tsumPool.Get();
-
-            tsum.transform.position = spawnPosition;
-            tsum.transform.rotation = Quaternion.identity;
-
-            TsumData.TsumEntity newTsumEntity = _tsumData.GetTsumEntityById(tsumId);
-            tsum.Initialize
-            (
-                newTsumEntity.TsumID,
-                newTsumEntity.TsumName,
-                _gameUIView,
-                newTsumEntity.TsumSprite,
-                newTsumEntity.TsumColor,
-                newTsumEntity.HighlightColor,
-                _tsumPool
-            );
-
-            return tsum;
+            ITsumView newTsumView = GetTsumFromPool(tsumId, spawnPosition);
+            return newTsumView;
         }
 
-        public ITsum SpawnRandomFallingTsum(int maxLevelIndex)
-        {
-            int randomIdx = UnityEngine.Random.Range(0, maxLevelIndex + 1);
-            if (randomIdx >= _tsumData.TsumEntities.Length)
-            {
-                randomIdx = 0;
-            }
-            int tsumId = _tsumData.TsumEntities[randomIdx].TsumID;
-
-            return SpawnTsum(tsumId);
-        }
-
-        public ITsum SpawnTsumAt(int tsumId, Vector3 position)
+        public ITsumView SpawnTsum(int tsumId, Vector3 position)
         {
             if (tsumId < 0)
             {
                 return null;
             }
+            ITsumView newTsumView = GetTsumFromPool(tsumId, position);
+            return newTsumView;
+        }
 
-            Tsum tsum = _tsumPool.Get();
+        private ITsumView GetTsumFromPool(int tsumId, Vector3 position)
+        {
+            TsumView tsum = _tsumPool.Get();
             tsum.transform.position = position;
             tsum.transform.rotation = Quaternion.identity;
 
-            TsumData.TsumEntity newTsumEntity = _tsumData.GetTsumEntityById(tsumId);
+            var entityData = _tsumData.GetTsumComponentById(tsumId);
 
             tsum.Initialize(
-                newTsumEntity.TsumID,
-                newTsumEntity.TsumName,
+                entityData.TsumName,
                 _gameUIView,
-                newTsumEntity.TsumSprite,
-                newTsumEntity.TsumColor,
-                newTsumEntity.HighlightColor,
+                entityData.TsumSprite,
+                entityData.TsumColor,
+                entityData.HighlightColor,
                 _tsumPool
             );
+
             return tsum;
         }
 
-        private Tsum CreateTsum()
+        private TsumView CreateTsum()
         {
             return Instantiate(_tsumPrefab, this.transform);
         }
 
-        private void OnGetTsum(Tsum tsum)
+        private void OnGetTsum(TsumView tsum)
         {
             tsum.gameObject.SetActive(true);
         }
 
-        private void OnReleaseTsum(Tsum tsum)
+        private void OnReleaseTsum(TsumView tsum)
         {
             tsum.gameObject.SetActive(false);
         }
 
-        private void OnDestroyTsum(Tsum tsum)
+        private void OnDestroyTsum(TsumView tsum)
         {
             Destroy(tsum.gameObject);
         }

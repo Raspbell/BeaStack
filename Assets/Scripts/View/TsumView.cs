@@ -4,26 +4,15 @@ using UnityEngine.Pool;
 using DG.Tweening;
 using Model.Interface;
 
-namespace View.Logic
+namespace View
 {
     // ITsum インターフェースを実装
-    public class Tsum : MonoBehaviour, ITsum
+    public class TsumView : MonoBehaviour, ITsumView
     {
         [SerializeField] private GameObject _highlightEffect;
         [SerializeField] private GameObject _tsumSpriteObject;
 
-        private bool _isConnected;
-        [HideInInspector] public bool IsConnected => _isConnected;
-
-        private int _tsumID;
-        public int TsumID => _tsumID;
-
-        private bool _isDeleting;
-        public bool IsDeleting => _isDeleting;
-
-        // ITsumの実装
         public Vector3 Position => transform.position;
-        public GameObject GameObject => this.gameObject;
 
         private string _tsumName;
         private Vector3 _initialScale;
@@ -33,7 +22,7 @@ namespace View.Logic
         private Sprite _tsumSprite;
         private SpriteRenderer _spriteRenderer;
         private SpriteRenderer _highlightSpriteRenderer;
-        private IObjectPool<Tsum> _pool;
+        private IObjectPool<TsumView> _pool;
 
         private void Awake()
         {
@@ -41,16 +30,14 @@ namespace View.Logic
         }
 
         public void Initialize(
-            int tsumID,
             string tsumName,
             GameUIView gameUIView,
             Sprite tsumSprite,
             Color tsumColor,
             Color highlightColor,
-            IObjectPool<Tsum> pool
+            IObjectPool<TsumView> pool
         )
         {
-            _tsumID = tsumID;
             _tsumName = tsumName;
             _gameUIView = gameUIView;
             _tsumSprite = tsumSprite;
@@ -95,10 +82,9 @@ namespace View.Logic
             {
                 rb.bodyType = RigidbodyType2D.Static;
             }
-            _isDeleting = true;
         }
 
-        public void HighlightTsum(bool highlight)
+        public void SetHighlight(bool highlight)
         {
             if (_highlightEffect != null && _highlightSpriteRenderer != null)
             {
@@ -135,15 +121,13 @@ namespace View.Logic
 
         public void OnSelected()
         {
-            _isConnected = true;
             OutlineTsum(true);
-            HighlightTsum(false);
+            SetHighlight(false);
             PlaySelectedAnimation();
         }
 
         public void OnUnselected()
         {
-            _isConnected = false;
             OutlineTsum(false);
         }
 
@@ -154,9 +138,6 @@ namespace View.Logic
 
         private void ResetState()
         {
-            _isConnected = false;
-            _isDeleting = false;
-
             var rigidBody = GetComponent<Rigidbody2D>();
             if (rigidBody != null)
             {
@@ -178,7 +159,7 @@ namespace View.Logic
                 _spriteRenderer.color = _tsumColor;
             }
 
-            HighlightTsum(false);
+            SetHighlight(false);
             OutlineTsum(false);
         }
     }

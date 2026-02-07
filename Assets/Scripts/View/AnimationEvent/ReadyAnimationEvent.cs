@@ -3,7 +3,7 @@ using UniRx;
 using TMPro;
 using System;
 
-namespace View.Logic
+namespace View
 {
     public class ReadyAnimationEvent : MonoBehaviour
     {

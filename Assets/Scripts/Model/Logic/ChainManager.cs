@@ -9,15 +9,15 @@ namespace Model.Logic
     {
         private PuzzleRule _puzzleRule;
 
-        private readonly List<ITsum> _currentChain = new List<ITsum>();
-        public List<ITsum> CurrentChain => _currentChain;
+        private readonly List<TsumEntity> _currentChain = new List<TsumEntity>();
+        public List<TsumEntity> CurrentChain => _currentChain;
 
         public ChainManager(PuzzleRule puzzleRule)
         {
             _puzzleRule = puzzleRule;
         }
 
-        public bool AddTsumToChain(ITsum addedTsum)
+        public bool AddTsumToChain(TsumEntity addedTsum)
         {
             if (_currentChain.Count == 0)
             {
@@ -25,7 +25,7 @@ namespace Model.Logic
                 return true;
             }
 
-            ITsum lastTsum = _currentChain.Last();
+            TsumEntity lastTsum = _currentChain.Last();
 
             if (_puzzleRule.CanConnectTsums(lastTsum.Position, addedTsum.Position))
             {
@@ -42,6 +42,11 @@ namespace Model.Logic
                 return;
             }
             _currentChain.RemoveAt(_currentChain.Count - 1);
+        }
+
+        public IEnumerable<ITsumView> GetCurrentChainViews()
+        {
+            return _currentChain.Select(tsumEntity => tsumEntity.TsumView);
         }
 
         public void ClearChain()

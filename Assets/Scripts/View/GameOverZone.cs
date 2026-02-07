@@ -2,7 +2,7 @@ using UnityEngine;
 using UniRx;
 using System;
 
-namespace View.Logic
+namespace View
 {
     public class GameOverZone : MonoBehaviour
     {
@@ -44,7 +44,7 @@ namespace View.Logic
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (other.GetComponent<Tsum>() != null)
+            if (other.GetComponent<TsumView>() != null)
             {
                 _triggerCount++;
             }
@@ -52,7 +52,7 @@ namespace View.Logic
 
         private void OnTriggerExit2D(Collider2D other)
         {
-            if (other.GetComponent<Tsum>() != null)
+            if (other.GetComponent<TsumView>() != null)
             {
                 _triggerCount--;
                 if (_triggerCount < 0) _triggerCount = 0;

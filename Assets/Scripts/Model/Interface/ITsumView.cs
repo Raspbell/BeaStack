@@ -2,19 +2,16 @@ using UnityEngine;
 
 namespace Model.Interface
 {
-    public interface ITsum
+    public interface ITsumView
     {
-        int TsumID { get; }
-        Vector3 Position { get; }
-        GameObject GameObject { get; }
-        bool IsDeleting { get; }
+        public Vector3 Position { get; }
 
         void SetDeleting();
         void PlayDeletedAnimation();
         void PlaySelectedAnimation();
         void DeleteTsum();
 
-        void HighlightTsum(bool isActive);
+        void SetHighlight(bool isActive);
         void OnSelected();
         void OnUnselected();
     }
