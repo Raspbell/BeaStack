@@ -1,3 +1,4 @@
+using UnityEngine;
 using UniRx;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,16 +9,18 @@ namespace Model.Logic
     public class ChainManager
     {
         private PuzzleRule _puzzleRule;
+        private TsumPhysicsManager _tsumPhysicsManager;
 
-        private readonly List<TsumEntity> _currentChain = new List<TsumEntity>();
-        public List<TsumEntity> CurrentChain => _currentChain;
+        private readonly List<Tsum> _currentChain = new List<Tsum>();
+        public List<Tsum> CurrentChain => _currentChain;
 
-        public ChainManager(PuzzleRule puzzleRule)
+        public ChainManager(PuzzleRule puzzleRule, TsumPhysicsManager tsumPhysicsManager)
         {
             _puzzleRule = puzzleRule;
+            _tsumPhysicsManager = tsumPhysicsManager;
         }
 
-        public bool AddTsumToChain(TsumEntity addedTsum)
+        public bool AddTsumToChain(Tsum addedTsum)
         {
             if (_currentChain.Count == 0)
             {
@@ -25,9 +28,11 @@ namespace Model.Logic
                 return true;
             }
 
-            TsumEntity lastTsum = _currentChain.Last();
+            Tsum lastTsum = _currentChain.Last();
+            Vector2 lastTsumPosition = _tsumPhysicsManager.GetTsumPosition(lastTsum.PhysicsIndex);
+            Vector2 addedTsumPosition = _tsumPhysicsManager.GetTsumPosition(addedTsum.PhysicsIndex);
 
-            if (_puzzleRule.CanConnectTsums(lastTsum.Position, addedTsum.Position))
+            if (_puzzleRule.CanConnectTsums(lastTsumPosition, addedTsumPosition))
             {
                 _currentChain.Add(addedTsum);
                 return true;

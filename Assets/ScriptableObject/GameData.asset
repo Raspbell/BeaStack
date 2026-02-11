@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a9717a3828451049aa5e50217e30b0c, type: 3}
   m_Name: GameData
   m_EditorClassIdentifier: 
-  InitialTsumCount: 20
+  MaxTsumCount: 60
+  InitialTsumCount: 60
   MaxSkillPoint: 100
   MaxFeverPoint: 30
   GameOverGraceTime: 3

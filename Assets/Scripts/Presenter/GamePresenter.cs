@@ -14,7 +14,7 @@ using View;
 
 namespace Presenter
 {
-    public class GamePresenter : IStartable, ITickable, IDisposable
+    public class GamePresenter : IStartable, ITickable, IFixedTickable, IDisposable
     {
         private GameModel _gameModel;
 
@@ -23,12 +23,16 @@ namespace Presenter
         private ChainManager _chainManager;
         private TimeTsumSpawnManager _timeManager;
         private PuzzleManager _puzzleManager;
+        private TsumPhysicsManager _tsumPhysicsManager;
 
         private GameUIView _gameUIView;
         private TsumSpawner _tsumSpawner;
         private ReadyAnimationEvent _readyAnimationEvent;
         private InputEventHandler _inputEventHandler;
         private ChainLineHandler _chainLineHandler;
+        private PhysicsBoundary _physicsBoundary;
+        private CameraAspectHandler _cameraAspectHandler;
+        private ScreenDisplayArea _screenDisplayArea;
 
         private GameOverZone _gameOverZone;
 
@@ -43,6 +47,7 @@ namespace Presenter
             ChainManager chainManager,
             TimeTsumSpawnManager timeManager,
             PuzzleManager puzzleManager,
+            TsumPhysicsManager tsumPhysicsManager,
             PuzzleRule puzzleRule,
             GameUIView gameUIView,
             TsumSpawner tsumSpawner,
@@ -50,6 +55,7 @@ namespace Presenter
             ReadyAnimationEvent readyAnimationEvent,
             ChainLineHandler chainLineHandler,
             GameOverZone gameOverZone,
+            PhysicsBoundary physicsBoundary,
             GameData gameData,
             TsumData tsumData
         )
@@ -58,6 +64,7 @@ namespace Presenter
             _chainManager = chainManager;
             _timeManager = timeManager;
             _puzzleManager = puzzleManager;
+            _tsumPhysicsManager = tsumPhysicsManager;
             _puzzleRule = puzzleRule;
             _gameUIView = gameUIView;
             _tsumSpawner = tsumSpawner;
@@ -65,6 +72,7 @@ namespace Presenter
             _readyAnimationEvent = readyAnimationEvent;
             _chainLineHandler = chainLineHandler;
             _gameOverZone = gameOverZone;
+            _physicsBoundary = physicsBoundary;
             _gameData = gameData;
             _tsumData = tsumData;
         }
@@ -94,6 +102,16 @@ namespace Presenter
                 return;
             }
 
+            float alpha = (Time.time - Time.fixedTime) / Time.fixedDeltaTime;
+            foreach (var tsum in _puzzleManager.AllTsums)
+            {
+                // Vector2 tsumPosition = _tsumPhysicsManager.GetTsumPosition(tsum.PhysicsIndex);
+                // tsum.TsumView.UpdatePosition(new Vector3(tsumPosition.x, tsumPosition.y));
+
+                Vector2 interpolatedPos = _tsumPhysicsManager.GetInterpolatedPosition(tsum.PhysicsIndex, alpha);
+                tsum.TsumView.UpdatePosition(interpolatedPos);
+            }
+
             if (_puzzleManager.IsSelectionActive)
             {
                 SelectTsum();
@@ -102,13 +120,19 @@ namespace Presenter
             if (_timeManager.Tick(Time.deltaTime))
             {
                 int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
-                ITsumView newTsum = _tsumSpawner.SpawnTsumAtRandom(randomTsumId);
-                if (newTsum != null)
-                {
-                    _puzzleManager.RegisterTsum(randomTsumId, newTsum);
-                }
-
+                Vector2 spawnPos = _tsumSpawner.GetRandomSpawnPosition();
+                _puzzleManager.CreateTsum(randomTsumId, spawnPos);
             }
+        }
+
+        public void FixedTick()
+        {
+            if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
+            {
+                return;
+            }
+
+            _tsumPhysicsManager.UpdateAllTsumPosition(Time.fixedDeltaTime, _physicsBoundary.LeftX, _physicsBoundary.RightX, _physicsBoundary.BottomY, _physicsBoundary.TopY);
         }
 
         public void Dispose()
@@ -170,7 +194,7 @@ namespace Presenter
                     TsumView firstTsumView = _inputEventHandler.SelectTsum();
                     if (firstTsumView != null)
                     {
-                        _puzzleManager.TryConnectTsum(firstTsumView);
+                        _puzzleManager.UpdateSelection(firstTsumView);
                     }
                 })
                 .AddTo(_disposables);
@@ -207,11 +231,8 @@ namespace Presenter
             for (int i = 0; i < _gameData.InitialTsumCount; i++)
             {
                 int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
-                ITsumView newTsumView = _tsumSpawner.SpawnTsumAtRandom(_gameData.MaxSpawnTsumLevelIndex);
-                if (newTsumView != null)
-                {
-                    _puzzleManager.RegisterTsum(randomTsumId, newTsumView);
-                }
+                Vector2 spawnPos = _tsumSpawner.GetRandomSpawnPosition();
+                _puzzleManager.CreateTsum(randomTsumId, spawnPos);
             }
         }
 
@@ -221,7 +242,7 @@ namespace Presenter
 
             if (selectedTsumView != null)
             {
-                _puzzleManager.TryConnectTsum(selectedTsumView);
+                _puzzleManager.UpdateSelection(selectedTsumView);
             }
         }
 

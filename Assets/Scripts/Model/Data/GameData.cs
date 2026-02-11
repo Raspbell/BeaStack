@@ -5,6 +5,7 @@ namespace Model.Data
     [CreateAssetMenu(fileName = "GameData", menuName = "Game/GameData")]
     public class GameData : ScriptableObject
     {
+        [Header("最大ツム数")] public int MaxTsumCount = 100;
         [Header("初期配置するツムの数")] public int InitialTsumCount = 1;
         [Header("スキルポイントの最大値")] public int MaxSkillPoint = 100;
         [Header("フィーバーポイントの最大値")] public int MaxFeverPoint = 30;

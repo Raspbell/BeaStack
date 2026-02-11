@@ -9,6 +9,7 @@ namespace View
     {
         [SerializeField] private BoxCollider2D _spawnArea;
         [SerializeField] private TsumView _tsumPrefab;
+        [SerializeField] private float _spawnZPosition = -1f;
 
         [SerializeField] private int _defaultCapacity = 50;
         [SerializeField] private int _maxSize = 100;
@@ -33,23 +34,16 @@ namespace View
             );
         }
 
-        public ITsumView SpawnTsumAtRandom(int tsumId)
+        public Vector2 GetRandomSpawnPosition()
         {
-            if (tsumId < 0)
-            {
-                return null;
-            }
-
             Vector2 spawnPosition = new Vector2(
-                Random.Range(_spawnArea.bounds.min.x, _spawnArea.bounds.max.x),
-                Random.Range(_spawnArea.bounds.min.y, _spawnArea.bounds.max.y)
-            );
-
-            ITsumView newTsumView = GetTsumFromPool(tsumId, spawnPosition);
-            return newTsumView;
+                 Random.Range(_spawnArea.bounds.min.x, _spawnArea.bounds.max.x),
+                 Random.Range(_spawnArea.bounds.min.y, _spawnArea.bounds.max.y)
+             );
+            return spawnPosition;
         }
 
-        public ITsumView SpawnTsum(int tsumId, Vector3 position)
+        public ITsumView SpawnTsum(int tsumId, Vector2 position)
         {
             if (tsumId < 0)
             {
@@ -59,19 +53,18 @@ namespace View
             return newTsumView;
         }
 
-        private ITsumView GetTsumFromPool(int tsumId, Vector3 position)
+        private ITsumView GetTsumFromPool(int tsumId, Vector2 position)
         {
             TsumView tsum = _tsumPool.Get();
-            tsum.transform.position = position;
+            tsum.transform.position = new Vector3(position.x, position.y, _spawnZPosition);
             tsum.transform.rotation = Quaternion.identity;
 
             var entityData = _tsumData.GetTsumComponentById(tsumId);
 
             tsum.Initialize(
-                entityData.TsumName,
                 _gameUIView,
-                entityData.TsumSprite,
-                entityData.TsumColor,
+                entityData.Sprite,
+                entityData.Color,
                 entityData.HighlightColor,
                 _tsumPool
             );
@@ -81,7 +74,7 @@ namespace View
 
         private TsumView CreateTsum()
         {
-            return Instantiate(_tsumPrefab, this.transform);
+            return Instantiate(_tsumPrefab, transform);
         }
 
         private void OnGetTsum(TsumView tsum)

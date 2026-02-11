@@ -30,7 +30,7 @@ namespace Model.Logic
             {
                 randomIdx = 0;
             }
-            return tsumData.TsumEntities[randomIdx].TsumID;
+            return tsumData.TsumEntities[randomIdx].ID;
         }
 
         public void AddChainScore(int chainLength, int tsumScore, bool isFever)

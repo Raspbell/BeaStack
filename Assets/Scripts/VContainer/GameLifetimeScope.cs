@@ -13,6 +13,7 @@ public class GameLifetimeScope : LifetimeScope
     [Header("Data")]
     [SerializeField] private GameData _gameData;
     [SerializeField] private TsumData _tsumData;
+    [SerializeField] private PhysicsData _physicsData;
 
     [Header("View Components")]
     [SerializeField] private GameUIView _gameUIView;
@@ -22,18 +23,20 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private GameDebugView _gameDebugView;
     [SerializeField] private ChainLineHandler _chainLineHandler;
     [SerializeField] private GameOverZone _gameOverZone;
+    [SerializeField] private PhysicsBoundary _physicsBoundary;
 
     protected override void Configure(IContainerBuilder builder)
     {
         builder.RegisterInstance(_gameData);
         builder.RegisterInstance(_tsumData);
+        builder.RegisterInstance(_physicsData);
 
         builder.RegisterComponent(_gameUIView);
 
         builder.RegisterComponent(_readyAnimationEvent);
         builder.RegisterComponent(_inputEventHandler);
+        builder.RegisterComponent(_physicsBoundary);
 
-        // インターフェースとして登録
         builder.RegisterComponent(_tsumSpawner).AsImplementedInterfaces().AsSelf();
         builder.RegisterComponent(_chainLineHandler).AsImplementedInterfaces().AsSelf();
 
@@ -42,13 +45,12 @@ public class GameLifetimeScope : LifetimeScope
             builder.RegisterComponent(_gameOverZone);
         }
 
-        // Model
         builder.Register<GameModel>(Lifetime.Singleton);
 
-        // Logic (Service)
         builder.Register<PuzzleRule>(Lifetime.Singleton);
 
-        // Manager
+        builder.Register<TsumPhysicsManager>(Lifetime.Singleton).WithParameter(typeof(int), _gameData.MaxTsumCount);
+
         builder.Register<ChainManager>(Lifetime.Singleton);
         builder.Register<TimeTsumSpawnManager>(Lifetime.Singleton);
         builder.Register<PuzzleManager>(Lifetime.Singleton);
@@ -61,7 +63,6 @@ public class GameLifetimeScope : LifetimeScope
         }
 #endif
 
-        // Presenter
         builder.RegisterEntryPoint<GamePresenter>(Lifetime.Singleton);
     }
 }

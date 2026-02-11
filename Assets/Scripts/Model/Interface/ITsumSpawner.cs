@@ -4,7 +4,7 @@ namespace Model.Interface
 {
     public interface ITsumSpawner
     {
-        ITsumView SpawnTsumAtRandom(int tsumId);
-        ITsumView SpawnTsum(int tsumId, Vector3 position);
+        Vector2 GetRandomSpawnPosition();
+        ITsumView SpawnTsum(int tsumId, Vector2 position);
     }
 }

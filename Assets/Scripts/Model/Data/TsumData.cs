@@ -12,11 +12,12 @@ public class TsumData : ScriptableObject
     [System.Serializable]
     public class TsumComponent
     {
-        public int TsumID;
-        public string TsumName;
-        public int TsumScore;
-        public Sprite TsumSprite;
-        public Color TsumColor;
+        public int ID;
+        public string Name;
+        public float Radius;
+        public int Score;
+        public Sprite Sprite;
+        public Color Color;
         public Color HighlightColor;
     }
 
@@ -32,7 +33,6 @@ public class TsumData : ScriptableObject
             return component;
         }
 
-        Debug.LogWarning($"TsumData: ID {tsumId} が見つかりませんでした。");
         return null;
     }
 
@@ -42,12 +42,12 @@ public class TsumData : ScriptableObject
 
         foreach (var entity in TsumEntities)
         {
-            if (_idToEntityMap.ContainsKey(entity.TsumID))
+            if (_idToEntityMap.ContainsKey(entity.ID))
             {
-                Debug.LogError($"TsumData: ID {entity.TsumID} が重複");
+                Debug.LogError($"TsumData: ID {entity.ID} が重複");
                 continue;
             }
-            _idToEntityMap.Add(entity.TsumID, entity);
+            _idToEntityMap.Add(entity.ID, entity);
         }
     }
 

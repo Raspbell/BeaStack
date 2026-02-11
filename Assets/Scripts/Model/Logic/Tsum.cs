@@ -3,10 +3,13 @@ using UnityEngine;
 
 namespace Model.Logic
 {
-    public class TsumEntity
+    public class Tsum
     {
         private int _tsumID;
         public int TsumID => _tsumID;
+
+        private int _physicsIndex;
+        public int PhysicsIndex => _physicsIndex;
 
         private bool _isConnected;
         public bool IsConnected => _isConnected;
@@ -17,12 +20,11 @@ namespace Model.Logic
         private ITsumView _tsumView;
         public ITsumView TsumView => _tsumView;
 
-        public Vector3 Position => _tsumView.Position;
-
-        public TsumEntity(int tsumID, ITsumView tsumView)
+        public Tsum(int tsumID, ITsumView tsumView, int physicsIndex)
         {
             _tsumID = tsumID;
             _tsumView = tsumView;
+            _physicsIndex = physicsIndex;
             _isConnected = false;
             _isDeleting = false;
         }

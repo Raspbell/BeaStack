@@ -6,15 +6,14 @@ using Model.Interface;
 
 namespace View
 {
-    // ITsum インターフェースを実装
     public class TsumView : MonoBehaviour, ITsumView
     {
+        // 線を引くために使う位置情報 (物理計算には使わない)
+        public Vector3 Position => transform.position;
+
         [SerializeField] private GameObject _highlightEffect;
         [SerializeField] private GameObject _tsumSpriteObject;
 
-        public Vector3 Position => transform.position;
-
-        private string _tsumName;
         private Vector3 _initialScale;
         private GameUIView _gameUIView;
         private Color _tsumColor;
@@ -30,7 +29,6 @@ namespace View
         }
 
         public void Initialize(
-            string tsumName,
             GameUIView gameUIView,
             Sprite tsumSprite,
             Color tsumColor,
@@ -38,7 +36,6 @@ namespace View
             IObjectPool<TsumView> pool
         )
         {
-            _tsumName = tsumName;
             _gameUIView = gameUIView;
             _tsumSprite = tsumSprite;
             _tsumColor = tsumColor;
@@ -63,7 +60,7 @@ namespace View
 
         public void DeleteTsum()
         {
-            OnDeleted();
+            // OnDeleted();
 
             if (_pool != null)
             {
@@ -77,11 +74,7 @@ namespace View
 
         public void SetDeleting()
         {
-            var rb = GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                rb.bodyType = RigidbodyType2D.Static;
-            }
+
         }
 
         public void SetHighlight(bool highlight)
@@ -119,6 +112,11 @@ namespace View
             }
         }
 
+        public void UpdatePosition(Vector2 newPosition)
+        {
+            transform.position = new Vector3(newPosition.x, newPosition.y, -1f);
+        }
+
         public void OnSelected()
         {
             OutlineTsum(true);
@@ -138,14 +136,6 @@ namespace View
 
         private void ResetState()
         {
-            var rigidBody = GetComponent<Rigidbody2D>();
-            if (rigidBody != null)
-            {
-                rigidBody.bodyType = RigidbodyType2D.Dynamic;
-                rigidBody.linearVelocity = Vector2.zero;
-                rigidBody.angularVelocity = 0f;
-            }
-
             transform.localScale = _initialScale;
             transform.rotation = Quaternion.identity;
 
