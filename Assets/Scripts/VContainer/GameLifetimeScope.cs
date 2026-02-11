@@ -1,12 +1,13 @@
 using VContainer;
 using VContainer.Unity;
 using UnityEngine;
+
 using Model;
 using Model.Logic;
+using Model.Data;
 using View;
 using Presenter;
 
-// GameInitializer の代わりになる「設定ファイル」
 public class GameLifetimeScope : LifetimeScope
 {
     [Header("Data")]

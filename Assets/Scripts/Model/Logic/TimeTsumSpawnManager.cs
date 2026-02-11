@@ -1,5 +1,6 @@
 using Unity.Mathematics;
 using UnityEngine;
+using Model.Data;
 
 namespace Model.Logic
 {

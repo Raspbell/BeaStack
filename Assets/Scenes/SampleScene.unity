@@ -1237,7 +1237,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _spawnArea: {fileID: 1768947598}
-  _tsumPrefab: {fileID: 727674159038486150, guid: fdb11794f87882e42aede0b93ef39465, type: 3}
+  _tsumPrefab: {fileID: 727674159038486150, guid: f6296ecb05f76fe4c99646246ccc89c6, type: 3}
   _defaultCapacity: 50
   _maxSize: 120
 --- !u!1 &709243723

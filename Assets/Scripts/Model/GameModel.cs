@@ -1,4 +1,5 @@
 using UniRx;
+using Model.Data;
 
 namespace Model
 {
