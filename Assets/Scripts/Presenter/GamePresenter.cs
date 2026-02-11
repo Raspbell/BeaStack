@@ -32,7 +32,6 @@ namespace Presenter
         private ChainLineHandler _chainLineHandler;
         private PhysicsBoundary _physicsBoundary;
         private CameraAspectHandler _cameraAspectHandler;
-        private ScreenDisplayArea _screenDisplayArea;
 
         private GameOverZone _gameOverZone;
 
