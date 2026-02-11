@@ -78,7 +78,7 @@ namespace Model.Logic
                 return;
             }
 
-            float radius = _tsumData.GetTsumComponentById(tsumID).Radius;
+            float radius = _tsumData.GetTsumComponentById(tsumID).Radius * _tsumData.BaseScale;
             _tsumPhysicsManager.InitializeTsum(physicsIndex, spawnPosition, radius);
 
             // GameObjectの生成

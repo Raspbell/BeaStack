@@ -12,7 +12,7 @@ namespace Model.Interface
         void PlaySelectedAnimation();
         void DeleteTsum();
         void SetHighlight(bool isActive);
-        void UpdatePosition(Vector2 position);
+        void UpdateTransform(Vector2 position, float rotation);
 
         void OnSelected();
         void OnUnselected();

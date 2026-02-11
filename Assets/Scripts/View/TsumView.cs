@@ -3,6 +3,7 @@ using UniRx;
 using UnityEngine.Pool;
 using DG.Tweening;
 using Model.Interface;
+using Model.Logic;
 
 namespace View
 {
@@ -30,17 +31,22 @@ namespace View
 
         public void Initialize(
             GameUIView gameUIView,
+            float tsumScale,
             Sprite tsumSprite,
             Color tsumColor,
             Color highlightColor,
             IObjectPool<TsumView> pool
         )
         {
+            ResetState();
+
             _gameUIView = gameUIView;
             _tsumSprite = tsumSprite;
             _tsumColor = tsumColor;
             _highlightColor = highlightColor;
             _pool = pool;
+
+            transform.localScale = Vector3.one * tsumScale;
 
             _spriteRenderer = _tsumSpriteObject.GetComponent<SpriteRenderer>();
             if (_spriteRenderer != null && _tsumSprite != null)
@@ -54,8 +60,6 @@ namespace View
             {
                 _highlightSpriteRenderer.color = _highlightColor;
             }
-
-            ResetState();
         }
 
         public void DeleteTsum()
@@ -112,9 +116,10 @@ namespace View
             }
         }
 
-        public void UpdatePosition(Vector2 newPosition)
+        public void UpdateTransform(Vector2 newPosition, float rotation)
         {
             transform.position = new Vector3(newPosition.x, newPosition.y, -1f);
+            _tsumSpriteObject.transform.rotation = Quaternion.Euler(0f, 0f, rotation);
         }
 
         public void OnSelected()

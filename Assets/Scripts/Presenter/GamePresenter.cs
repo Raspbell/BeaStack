@@ -31,7 +31,6 @@ namespace Presenter
         private InputEventHandler _inputEventHandler;
         private ChainLineHandler _chainLineHandler;
         private PhysicsBoundary _physicsBoundary;
-        private CameraAspectHandler _cameraAspectHandler;
 
         private GameOverZone _gameOverZone;
 
@@ -108,7 +107,8 @@ namespace Presenter
                 // tsum.TsumView.UpdatePosition(new Vector3(tsumPosition.x, tsumPosition.y));
 
                 Vector2 interpolatedPos = _tsumPhysicsManager.GetInterpolatedPosition(tsum.PhysicsIndex, alpha);
-                tsum.TsumView.UpdatePosition(interpolatedPos);
+                float interpolatedRotation = _tsumPhysicsManager.GetInterpolatedRotation(tsum.PhysicsIndex, alpha);
+                tsum.TsumView.UpdateTransform(interpolatedPos, interpolatedRotation);
             }
 
             if (_puzzleManager.IsSelectionActive)

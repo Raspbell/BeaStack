@@ -4,6 +4,7 @@ using System.Collections.Generic; // Dictionaryのために必要
 [CreateAssetMenu(fileName = "TsumData", menuName = "Game/TsumData")]
 public class TsumData : ScriptableObject
 {
+    public float BaseScale = 1.7f;
     public TsumComponent[] TsumEntities;
 
     [System.NonSerialized]

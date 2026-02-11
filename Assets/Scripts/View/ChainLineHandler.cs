@@ -9,6 +9,7 @@ namespace View
     public class ChainLineHandler : MonoBehaviour, IChainLineHandler
     {
         [SerializeField] private LineRenderer _linePrefab;
+        [SerializeField] private float _lineZ;
 
         private LineRenderer _currentLine;
         private List<ITsumView> _trackingTsums;
@@ -35,7 +36,7 @@ namespace View
                 if (_trackingTsums[i] != null)
                 {
                     Vector3 pos = _trackingTsums[i].Position;
-                    pos.z = -1f;
+                    pos.z = _lineZ;
                     _currentLine.SetPosition(i, pos);
                 }
             }

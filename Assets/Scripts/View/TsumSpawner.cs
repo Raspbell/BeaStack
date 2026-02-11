@@ -55,21 +55,22 @@ namespace View
 
         private ITsumView GetTsumFromPool(int tsumId, Vector2 position)
         {
-            TsumView tsum = _tsumPool.Get();
-            tsum.transform.position = new Vector3(position.x, position.y, _spawnZPosition);
-            tsum.transform.rotation = Quaternion.identity;
+            TsumView tsumView = _tsumPool.Get();
+            tsumView.transform.position = new Vector3(position.x, position.y, _spawnZPosition);
+            tsumView.transform.rotation = Quaternion.identity;
 
-            var entityData = _tsumData.GetTsumComponentById(tsumId);
+            var tsumEntityData = _tsumData.GetTsumComponentById(tsumId);
 
-            tsum.Initialize(
+            tsumView.Initialize(
                 _gameUIView,
-                entityData.Sprite,
-                entityData.Color,
-                entityData.HighlightColor,
+                tsumEntityData.Radius,
+                tsumEntityData.Sprite,
+                tsumEntityData.Color,
+                tsumEntityData.HighlightColor,
                 _tsumPool
             );
 
-            return tsum;
+            return tsumView;
         }
 
         private TsumView CreateTsum()

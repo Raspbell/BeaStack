@@ -12,24 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fd28e85b43b0d9428e764bf76009a75, type: 3}
   m_Name: TsumData
   m_EditorClassIdentifier: 
+  BaseScale: 1.7
   TsumEntities:
   - ID: 0
     Name: 
-    Radius: 0.38
+    Radius: 0.25
     Score: 0
     Sprite: {fileID: 0}
     Color: {r: 0, g: 1, b: 0.15586257, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
   - ID: 1
     Name: 
-    Radius: 0.38
+    Radius: 0.3
     Score: 0
     Sprite: {fileID: 0}
     Color: {r: 1, g: 0, b: 0, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
   - ID: 2
     Name: 
-    Radius: 0.38
+    Radius: 0.35
     Score: 0
     Sprite: {fileID: 0}
     Color: {r: 0.96632445, g: 1, b: 0, a: 1}

@@ -36,11 +36,14 @@ public class TsumPhysicsManager
     {
         _tsumPhysicsData[physicsIndex].IsActive = true;
         _tsumPhysicsData[physicsIndex].IsStatic = false;
+        _tsumPhysicsData[physicsIndex].Radius = radius;
         _tsumPhysicsData[physicsIndex].Position = position;
         _tsumPhysicsData[physicsIndex].PreviousPosition = position;
         _tsumPhysicsData[physicsIndex].RenderStartPosition = position;
         _tsumPhysicsData[physicsIndex].RenderEndPosition = position;
-        _tsumPhysicsData[physicsIndex].Radius = radius;
+        _tsumPhysicsData[physicsIndex].Rotation = 0f;
+        _tsumPhysicsData[physicsIndex].RenderStartRotation = 0f;
+        _tsumPhysicsData[physicsIndex].RenderEndRotation = 0f;
     }
 
     public void ReleasePhysicsIndex(int physicsIndex)
@@ -57,6 +60,11 @@ public class TsumPhysicsManager
     public Vector2 GetInterpolatedPosition(int physicsIndex, float alpha)
     {
         return Vector2.Lerp(_tsumPhysicsData[physicsIndex].RenderStartPosition, _tsumPhysicsData[physicsIndex].RenderEndPosition, alpha);
+    }
+
+    public float GetInterpolatedRotation(int physicsIndex, float alpha)
+    {
+        return Mathf.Lerp(_tsumPhysicsData[physicsIndex].RenderStartRotation, _tsumPhysicsData[physicsIndex].RenderEndRotation, alpha);
     }
 
     public float GetTsumRadius(int physicsIndex)
@@ -78,6 +86,7 @@ public class TsumPhysicsManager
             if (_tsumPhysicsData[i].IsActive)
             {
                 _tsumPhysicsData[i].RenderStartPosition = _tsumPhysicsData[i].Position;
+                _tsumPhysicsData[i].RenderStartRotation = _tsumPhysicsData[i].Rotation;
             }
         }
 
@@ -194,9 +203,27 @@ public class TsumPhysicsManager
 
         for (int i = 0; i < _tsumPhysicsData.Length; i++)
         {
+            if (!_tsumPhysicsData[i].IsActive)
+            {
+                continue;
+            }
+
+            if (_tsumPhysicsData[i].IsStatic)
+            {
+                continue;
+            }
+
+            float deltaX = _tsumPhysicsData[i].Position.x - _tsumPhysicsData[i].PreviousPosition.x;
+            float angleChange = -(deltaX / _tsumPhysicsData[i].Radius) * Mathf.Rad2Deg;
+            _tsumPhysicsData[i].Rotation += angleChange;
+        }
+
+        for (int i = 0; i < _tsumPhysicsData.Length; i++)
+        {
             if (_tsumPhysicsData[i].IsActive)
             {
                 _tsumPhysicsData[i].RenderEndPosition = _tsumPhysicsData[i].Position;
+                _tsumPhysicsData[i].RenderEndRotation = _tsumPhysicsData[i].Rotation;
             }
         }
     }
