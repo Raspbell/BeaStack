@@ -24,6 +24,7 @@ namespace Presenter
         private TimeTsumSpawnManager _timeManager;
         private PuzzleManager _puzzleManager;
         private TsumPhysicsManager _tsumPhysicsManager;
+        private SkillManager _skillManager;
 
         private GameUIView _gameUIView;
         private TsumSpawner _tsumSpawner;
@@ -45,6 +46,7 @@ namespace Presenter
             TimeTsumSpawnManager timeManager,
             PuzzleManager puzzleManager,
             TsumPhysicsManager tsumPhysicsManager,
+            SkillManager skillManager,
             PuzzleRule puzzleRule,
             GameUIView gameUIView,
             TsumSpawner tsumSpawner,
@@ -62,6 +64,7 @@ namespace Presenter
             _timeManager = timeManager;
             _puzzleManager = puzzleManager;
             _tsumPhysicsManager = tsumPhysicsManager;
+            _skillManager = skillManager;
             _puzzleRule = puzzleRule;
             _gameUIView = gameUIView;
             _tsumSpawner = tsumSpawner;
@@ -94,6 +97,16 @@ namespace Presenter
                 return;
             }
 
+            if (_skillManager.IsSkillActivationReady.Value)
+            {
+                return;
+            }
+
+            if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
+            {
+                return;
+            }
+
             float alpha = (Time.time - Time.fixedTime) / Time.fixedDeltaTime;
             foreach (var tsum in _puzzleManager.AllTsums)
             {
@@ -120,6 +133,16 @@ namespace Presenter
 
         public void FixedTick()
         {
+            if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
+            {
+                return;
+            }
+
+            if (_skillManager.IsSkillActivationReady.Value)
+            {
+                return;
+            }
+
             if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
             {
                 return;
@@ -191,10 +214,22 @@ namespace Presenter
                 .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
                 .Subscribe(_ =>
                 {
-                    TsumView firstTsumView = _inputEventHandler.SelectTsum();
-                    if (firstTsumView != null)
+                    TsumView touchedTsum = _inputEventHandler.SelectTsum();
+
+                    // スキル待機中
+                    if (_skillManager.IsSkillActivationReady.Value)
                     {
-                        _puzzleManager.UpdateSelection(firstTsumView);
+                        if (touchedTsum != null)
+                        {
+                            _puzzleManager.ActivateWildcardSkill(touchedTsum);
+                        }
+                        return;
+                    }
+
+                    // 通常時
+                    if (touchedTsum != null)
+                    {
+                        _puzzleManager.UpdateSelection(touchedTsum);
                     }
                 })
                 .AddTo(_disposables);
@@ -216,6 +251,10 @@ namespace Presenter
                     Vector2 spawnPosition = _tsumSpawner.GetRandomSpawnPosition();
                     _puzzleManager.CreateTsum(randomTsumId, spawnPosition);
                 })
+                .AddTo(_disposables);
+
+            _gameUIView.OnSkillButtonClicked
+                .Subscribe(_ => _skillManager.ActivateSkill())
                 .AddTo(_disposables);
 
         }

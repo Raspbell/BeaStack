@@ -42,17 +42,11 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: ba83a6039f80ad54a900db8e24f346d3, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
-  - ID: 4
+  WildcardTsumEntity:
+    ID: 100
     Name: 
-    Radius: 0.32
+    Radius: 0.2
     Score: 0
     Sprite: {fileID: 21300000, guid: ee48436ea29607f49ba3e6dcb171484c, type: 3}
-    Color: {r: 1, g: 1, b: 1, a: 1}
-    HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
-  - ID: 5
-    Name: 
-    Radius: 0.35
-    Score: 0
-    Sprite: {fileID: 21300000, guid: 252462e407ea8734dbbbce6939d6c25d, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}

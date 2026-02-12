@@ -39,8 +39,6 @@ namespace Model.Logic
             {
                 return;
             }
-
-
         }
 
         public void AddFeverPoints(int points)
@@ -52,9 +50,14 @@ namespace Model.Logic
             _gameModel.FeverPoint.Value = Mathf.Min(_gameModel.FeverPoint.Value + points, _gameModel.FeverPoint.Value);
         }
 
-        private void AddScore(int score)
+        public void AddScore(int score)
         {
             _gameModel.Score.Value += score;
+        }
+
+        public void AddSkillPoints(int score)
+        {
+            _gameModel.SkillPoint.Value += score;
         }
     }
 }

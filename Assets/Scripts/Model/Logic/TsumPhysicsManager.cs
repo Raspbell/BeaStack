@@ -105,6 +105,23 @@ namespace Model.Logic
             return count;
         }
 
+        public void GetTsumsInRadius(Vector2 center, float radius, List<int> resultIndices)
+        {
+            resultIndices.Clear();
+            float radiusSqr = radius * radius;
+
+            for (int i = 0; i < _tsumPhysicsData.Length; i++)
+            {
+                if (!_tsumPhysicsData[i].IsActive) continue;
+
+                Vector2 diff = _tsumPhysicsData[i].Position - center;
+                if (diff.sqrMagnitude <= radiusSqr)
+                {
+                    resultIndices.Add(i);
+                }
+            }
+        }
+
         public Vector2 GetTsumPosition(int physicsIndex)
         {
             return _tsumPhysicsData[physicsIndex].Position;

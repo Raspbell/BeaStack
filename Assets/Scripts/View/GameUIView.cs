@@ -14,6 +14,7 @@ namespace View
         [SerializeField] private TextMeshProUGUI _timerText;
         [SerializeField] private TextMeshProUGUI _scoreText;
         [SerializeField] private Button _spawnButton;
+        [SerializeField] private Button _skillButton;
         [SerializeField] private Image _skillPointBar;
         [SerializeField] private Image _feverPointBar;
         [SerializeField] private Animator _readyAnimator;
@@ -27,7 +28,7 @@ namespace View
         private Tween _scoreTween;
 
         public IObservable<Unit> OnSpawnButtonClicked => _spawnButton.OnClickAsObservable();
-
+        public IObservable<Unit> OnSkillButtonClicked => _skillButton.OnClickAsObservable();
 
         public void UpdateTimer(float timeRemaining, float maxTime)
         {

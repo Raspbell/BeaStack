@@ -8,6 +8,9 @@ namespace Model.Logic
         private int _tsumID;
         public int TsumID => _tsumID;
 
+        private TsumType _tsumType = TsumType.Normal;
+        public TsumType Type => _tsumType;
+
         private int _physicsIndex;
         public int PhysicsIndex => _physicsIndex;
 
@@ -38,6 +41,11 @@ namespace Model.Logic
         {
             _isDeleting = true;
             _tsumView.SetDeleting();
+        }
+
+        public void SetType(TsumType type)
+        {
+            _tsumType = type;
         }
 
         public void OnSelected()

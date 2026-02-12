@@ -50,6 +50,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<TimeTsumSpawnManager>(Lifetime.Singleton);
         builder.Register<PuzzleManager>(Lifetime.Singleton);
         builder.Register<GameoverManager>(Lifetime.Singleton);
+        builder.Register<SkillManager>(Lifetime.Singleton);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (_gameDebugView != null)

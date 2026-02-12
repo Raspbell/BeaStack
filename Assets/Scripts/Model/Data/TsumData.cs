@@ -6,6 +6,7 @@ public class TsumData : ScriptableObject
 {
     public float BaseScale = 1.7f;
     public TsumComponent[] TsumEntities;
+    public TsumComponent WildcardTsumEntity;
 
     [System.NonSerialized]
     private Dictionary<int, TsumComponent> _idToEntityMap;
@@ -49,6 +50,16 @@ public class TsumData : ScriptableObject
                 continue;
             }
             _idToEntityMap.Add(entity.ID, entity);
+        }
+
+        if (WildcardTsumEntity != null)
+        {
+            if (_idToEntityMap.ContainsKey(WildcardTsumEntity.ID))
+            {
+                Debug.LogWarning($"TsumData: Wildcard ID {WildcardTsumEntity.ID} は既存のツムIDと重複しています。検索結果が上書きされる可能性があります。");
+            }
+
+            _idToEntityMap[WildcardTsumEntity.ID] = WildcardTsumEntity;
         }
     }
 

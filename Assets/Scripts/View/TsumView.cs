@@ -145,6 +145,27 @@ namespace View
             }
         }
 
+        public void ChangeVisual(Sprite sprite, Color color, Color highlightColor)
+        {
+            _tsumSprite = sprite;
+            _tsumColor = color;
+            _highlightColor = highlightColor;
+
+            if (_spriteRenderer != null)
+            {
+                if (_tsumSprite != null)
+                {
+                    _spriteRenderer.sprite = _tsumSprite;
+                }
+                _spriteRenderer.color = _tsumColor;
+            }
+
+            if (_highlightSpriteRenderer != null)
+            {
+                _highlightSpriteRenderer.color = _highlightColor;
+            }
+        }
+
         public void OnSelected()
         {
             OutlineTsum(true);

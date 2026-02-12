@@ -17,6 +17,7 @@ namespace Model.Logic
         private PuzzleRule _puzzleRule;
         private ChainManager _chainManager;
         private TsumPhysicsManager _tsumPhysicsManager;
+        private SkillManager _skillManager;
 
         private GameData _gameData;
         private TsumData _tsumData;
@@ -24,10 +25,12 @@ namespace Model.Logic
         private ITsumSpawner _tsumSpawner;
         private IChainLineHandler _chainLineHandler;
 
-        private readonly List<Tsum> _allTsumEntity = new List<Tsum>();
+        private int _lockedChainID = -1;
+
+        private List<Tsum> _allTsumEntity = new List<Tsum>();
         public List<Tsum> AllTsums => _allTsumEntity;
 
-        private readonly Dictionary<ITsumView, Tsum> _viewToEntityMap = new Dictionary<ITsumView, Tsum>();
+        private Dictionary<ITsumView, Tsum> _viewToEntityMap = new Dictionary<ITsumView, Tsum>();
         public Dictionary<ITsumView, Tsum> ViewToEntityMap => _viewToEntityMap;
 
         private Tsum _lastSelectedTsum;
@@ -48,7 +51,8 @@ namespace Model.Logic
             ChainManager chainManager,
             TsumPhysicsManager tsumPhysics,
             ITsumSpawner tsumSpawner,
-            IChainLineHandler chainLineHandler
+            IChainLineHandler chainLineHandler,
+            SkillManager skillManager
         )
         {
             _gameModel = gameModel;
@@ -59,6 +63,7 @@ namespace Model.Logic
             _tsumPhysicsManager = tsumPhysics;
             _tsumSpawner = tsumSpawner;
             _chainLineHandler = chainLineHandler;
+            _skillManager = skillManager;
         }
 
         // ツムを生成
@@ -70,7 +75,16 @@ namespace Model.Logic
                 return;
             }
 
-            float radius = _tsumData.GetTsumComponentById(tsumID).Radius * _tsumData.BaseScale;
+            // TsumDataからデータを取得 (TsumData更新によりWildcardも取得可能)
+            var tsumComponent = _tsumData.GetTsumComponentById(tsumID);
+            if (tsumComponent == null)
+            {
+                Debug.LogError($"ID: {tsumID} のツムデータが見つかりません。");
+                _tsumPhysicsManager.ReleasePhysicsIndex(physicsIndex);
+                return;
+            }
+
+            float radius = tsumComponent.Radius * _tsumData.BaseScale;
             _tsumPhysicsManager.InitializeTsum(physicsIndex, spawnPosition, radius);
 
             // GameObjectの生成
@@ -84,13 +98,27 @@ namespace Model.Logic
 
             var tsum = new Tsum(tsumID, tsumView, physicsIndex);
 
+            // ▼ ワイルドカード判定: 生成されたIDがワイルドカードのものならタイプを設定
+            if (_tsumData.WildcardTsumEntity != null && tsumID == _tsumData.WildcardTsumEntity.ID)
+            {
+                tsum.SetType(TsumType.Wildcard);
+            }
+
             _allTsumEntity.Add(tsum);
             _viewToEntityMap[tsumView] = tsum;
         }
 
+        // ... OnSelectionStart, OnSelectionEnd, CanConnectTsums など既存メソッドはそのまま維持 ...
+
         // 選択開始時
         public void OnSelectionStart(Tsum firstTsum)
         {
+            _lockedChainID = -1;
+            if (firstTsum.Type == TsumType.Normal)
+            {
+                _lockedChainID = firstTsum.TsumID;
+            }
+
             _currentSelectingTsumID = firstTsum.TsumID;
             _isSelectionActive = true;
             _lastSelectedTsum = firstTsum;
@@ -99,7 +127,6 @@ namespace Model.Logic
             UpdateLine();
         }
 
-        // 選択終了時
         public void OnSelectionEnd()
         {
             _currentSelectingTsumID = -1;
@@ -108,18 +135,15 @@ namespace Model.Logic
 
             TurnOffAllHighlights();
 
-            // チェインを値参照してコピー
             var currentChain = _chainManager.CurrentChain.ToList();
             _chainManager.ClearChain();
 
-            // チェインの長さが十分なら解決処理を非同期で投げる
             if (currentChain.Count >= _puzzleRule.MinChainCountToClear)
             {
                 float duration = currentChain.Count * _gameData.ChainClearInterval;
                 _chainLineHandler.FixLineAndFadeOut(duration);
                 ResolveChain(currentChain).Forget();
             }
-            // そうでなければ選択解除
             else
             {
                 _chainLineHandler.UpdateLine(null);
@@ -130,40 +154,120 @@ namespace Model.Logic
             }
         }
 
-        /// <summary>
-        /// ツム同士が接続可能かどうか
-        /// </summary>
         public bool CanConnectTsums(Tsum tsum)
         {
-            if (_currentSelectingTsumID != tsum.TsumID)
+            bool isWildcardInvolved = tsum.Type == TsumType.Wildcard ||
+                                      (_lastSelectedTsum != null && _lastSelectedTsum.Type == TsumType.Wildcard);
+
+            if (!isWildcardInvolved)
             {
-                return false;
+                if (_currentSelectingTsumID != tsum.TsumID)
+                {
+                    return false;
+                }
             }
+
             if (_lastSelectedTsum == null)
             {
                 return false;
             }
+
             Tsum lastTsum = _chainManager.CurrentChain.Last();
+
+            bool isIdMatch = CheckConnectionIdLogic(lastTsum, tsum);
+            if (!isIdMatch)
+            {
+                return false;
+            }
+
             Vector2 lastTsumPosition = _tsumPhysicsManager.GetTsumPosition(lastTsum.PhysicsIndex);
             Vector2 tsumPosition = _tsumPhysicsManager.GetTsumPosition(tsum.PhysicsIndex);
 
             return _puzzleRule.CanConnectTsums(lastTsumPosition, tsumPosition);
         }
 
-        /// <summary>
-        /// 現在つなげ途中のチェインを更新
-        /// </summary>
-        public void UpdateSelection(ITsumView touchedTsumView)
+        private bool CheckConnectionIdLogic(Tsum lastTsum, Tsum currentTsum)
         {
-            if (touchedTsumView == null)
+            bool isLastWild = lastTsum.Type == TsumType.Wildcard;
+            bool isCurrentWild = currentTsum.Type == TsumType.Wildcard;
+            int targetId = currentTsum.TsumID;
+
+            if (isLastWild || isCurrentWild)
+            {
+                if (_lockedChainID == -1)
+                {
+                    if (!isCurrentWild) _lockedChainID = targetId;
+                    return true;
+                }
+                else
+                {
+                    return isCurrentWild || (targetId == _lockedChainID);
+                }
+            }
+
+            if (_lockedChainID == -1)
+            {
+                if (lastTsum.TsumID == currentTsum.TsumID)
+                {
+                    _lockedChainID = currentTsum.TsumID;
+                    return true;
+                }
+                return false;
+            }
+            return targetId == _lockedChainID;
+        }
+
+        // ▼ 変更: 既存ツムを削除し、新しいワイルドカードツムを生成する
+        public void ActivateWildcardSkill(ITsumView targetView)
+        {
+            if (!_viewToEntityMap.TryGetValue(targetView, out Tsum targetTsum))
             {
                 return;
             }
 
-            if (!_viewToEntityMap.TryGetValue(touchedTsumView, out Tsum entity))
+            var wildcardData = _tsumData.WildcardTsumEntity;
+            if (wildcardData == null)
             {
+                Debug.LogError("WildcardTsumEntity is null in TsumData.");
                 return;
             }
+
+            // 1. 位置情報の確保
+            int targetPhysicsIndex = targetTsum.PhysicsIndex;
+            Vector2 position = _tsumPhysicsManager.GetTsumPosition(targetPhysicsIndex);
+
+            // 2. 既存ツムの削除
+            RemoveTsumInstant(targetTsum);
+
+            // 3. ワイルドカードの新規生成
+            // CreateTsum内でIDチェックが行われ、自動的に TsumType.Wildcard になります
+            CreateTsum(wildcardData.ID, position);
+
+            // 4. スキル終了
+            _skillManager.CompleteSkillActivation();
+        }
+
+        // ヘルパー: ツムを即座に削除する（アニメーションなし）
+        private void RemoveTsumInstant(Tsum tsum)
+        {
+            if (tsum == null) return;
+
+            if (tsum.TsumView != null)
+            {
+                _viewToEntityMap.Remove(tsum.TsumView);
+            }
+
+            _tsumPhysicsManager.ReleasePhysicsIndex(tsum.PhysicsIndex);
+            _allTsumEntity.Remove(tsum);
+            tsum.DeleteTsum();
+        }
+
+        // ... UpdateSelection など既存メソッドは維持 ...
+
+        public void UpdateSelection(ITsumView touchedTsumView)
+        {
+            if (touchedTsumView == null) return;
+            if (!_viewToEntityMap.TryGetValue(touchedTsumView, out Tsum entity)) return;
 
             if (!IsSelectionActive)
             {
@@ -172,34 +276,48 @@ namespace Model.Logic
                 return;
             }
 
-            if (entity.IsDeleting)
+            if (entity.IsDeleting) return;
+
+            bool isWildcardInvolved = entity.Type == TsumType.Wildcard ||
+                                      (_lastSelectedTsum != null && _lastSelectedTsum.Type == TsumType.Wildcard);
+
+            if (!isWildcardInvolved && CurrentSelectingTsumID != entity.TsumID)
             {
                 return;
             }
 
-            if (CurrentSelectingTsumID != entity.TsumID)
-            {
-                return;
-            }
-
-            // 一つ前のツムをタップした場合はチェインから外す (戻す処理)
             var chain = _chainManager.CurrentChain;
             if (chain.Count >= 2 && chain[chain.Count - 2] == entity)
             {
                 Tsum lastTsum = chain.Last();
                 _chainManager.RemoveLastTsumFromChain();
                 lastTsum.OnUnselected();
+                RecalculateLockedID();
                 UpdateLine();
                 return;
             }
 
-            // ここまでたどり着けたらチェインに追加
             if (!chain.Contains(entity) && CanConnectTsums(entity))
             {
                 _chainManager.AddTsumToChain(entity);
                 entity.OnSelected();
                 UpdateLine();
             }
+        }
+
+        private void RecalculateLockedID()
+        {
+            var chain = _chainManager.CurrentChain;
+            int foundId = -1;
+            foreach (var tsum in chain)
+            {
+                if (tsum.Type == TsumType.Normal)
+                {
+                    if (foundId == -1) foundId = tsum.TsumID;
+                    else if (foundId != tsum.TsumID) return;
+                }
+            }
+            _lockedChainID = foundId;
         }
 
         private void UpdateLine()
@@ -234,20 +352,33 @@ namespace Model.Logic
 
                 foreach (var neighborEntity in _allTsumEntity)
                 {
-                    if (visited.Contains(neighborEntity))
-                    {
-                        continue;
-                    }
+                    if (visited.Contains(neighborEntity)) continue;
 
                     Vector2 neighborPosition = _tsumPhysicsManager.GetTsumPosition(neighborEntity.PhysicsIndex);
 
-                    if (neighborEntity.TsumID == _currentSelectingTsumID &&
-                        !neighborEntity.IsDeleting &&
+                    if (!neighborEntity.IsDeleting &&
                         _puzzleRule.CanConnectTsums(currentPosition, neighborPosition))
                     {
-                        visited.Add(neighborEntity);
-                        queue.Enqueue(neighborEntity);
-                        neighborEntity.SetHighlight(true);
+                        bool isIdOK = false;
+                        if (neighborEntity.Type == TsumType.Wildcard || current.Type == TsumType.Wildcard)
+                        {
+                            if (_lockedChainID == -1 || neighborEntity.Type == TsumType.Wildcard || neighborEntity.TsumID == _lockedChainID)
+                            {
+                                isIdOK = true;
+                            }
+                        }
+                        else
+                        {
+                            if (_lockedChainID == -1) isIdOK = (neighborEntity.TsumID == current.TsumID);
+                            else isIdOK = (neighborEntity.TsumID == _lockedChainID);
+                        }
+
+                        if (isIdOK)
+                        {
+                            visited.Add(neighborEntity);
+                            queue.Enqueue(neighborEntity);
+                            neighborEntity.SetHighlight(true);
+                        }
                     }
                 }
             }
@@ -264,43 +395,42 @@ namespace Model.Logic
             }
         }
 
-        public List<Tsum> FindSelectableTsums(Tsum lastSelectedTsum)
-        {
-            Vector2 lastSelectedTsumPosition = _tsumPhysicsManager.GetTsumPosition(lastSelectedTsum.PhysicsIndex);
-            List<Tsum> selectableTsums = new List<Tsum>();
+        // ... ResolveChain なども維持 ...
 
-            foreach (Tsum tsumEntity in _allTsumEntity)
-            {
-                if (tsumEntity == lastSelectedTsum)
-                {
-                    continue;
-                }
-
-                Vector2 tsumEntityPosition = _tsumPhysicsManager.GetTsumPosition(tsumEntity.PhysicsIndex);
-                if (_puzzleRule.CanConnectTsums(lastSelectedTsumPosition, tsumEntityPosition))
-                {
-                    selectableTsums.Add(tsumEntity);
-                }
-            }
-            return selectableTsums;
-        }
-
-        /// <summary>
-        /// チェインを解決
-        /// </summary>
         public async UniTask ResolveChain(List<Tsum> chainToResolve)
         {
-            if (chainToResolve.Count == 0)
+            if (chainToResolve.Count == 0) return;
+
+            HashSet<Tsum> bombTargets = new HashSet<Tsum>();
+            HashSet<Tsum> chainSet = new HashSet<Tsum>(chainToResolve);
+
+            List<int> nearbyIndices = new List<int>();
+            float explosionRadius = 2.5f;
+
+            foreach (var tsum in chainToResolve)
             {
-                return;
+                if (tsum.Type == TsumType.Wildcard)
+                {
+                    Vector2 pos = _tsumPhysicsManager.GetTsumPosition(tsum.PhysicsIndex);
+                    _tsumPhysicsManager.GetTsumsInRadius(pos, explosionRadius, nearbyIndices);
+
+                    foreach (int idx in nearbyIndices)
+                    {
+                        Tsum neighbor = FindTsumByPhysicsIndex(idx);
+                        if (neighbor != null && !neighbor.IsDeleting && !chainSet.Contains(neighbor))
+                        {
+                            bombTargets.Add(neighbor);
+                        }
+                    }
+                }
             }
 
-            int currentTsumID = chainToResolve[0].TsumID;
             Tsum lastTsum = chainToResolve.Last();
             Vector2 evolvePosition = _tsumPhysicsManager.GetTsumPosition(lastTsum.PhysicsIndex);
+            int currentTsumID = chainToResolve[0].TsumID;
 
-            // 削除対象としてマーク
-            foreach (var tsumEntity in chainToResolve)
+            var allTargets = chainSet.Concat(bombTargets);
+            foreach (var tsumEntity in allTargets)
             {
                 if (tsumEntity != null)
                 {
@@ -309,26 +439,27 @@ namespace Model.Logic
                 }
             }
 
-            // 間を空けて消去アニメーション再生
-            for (int i = 0; i < chainToResolve.Count; i++)
+            foreach (var tsumEntity in chainToResolve)
             {
-                Tsum tsumEntity = chainToResolve[i];
-                ITsumView tsumView = tsumEntity?.TsumView;
-                if (tsumEntity != null)
+                if (tsumEntity != null && tsumEntity.TsumView != null)
                 {
-                    tsumView.PlayDeletedAnimation();
+                    tsumEntity.TsumView.PlayDeletedAnimation();
                 }
                 await UniTask.Delay((int)(_gameData.ChainClearInterval * 1000));
             }
 
-            // ツムを削除
-            for (int i = 0; i < chainToResolve.Count; i++)
+            foreach (var tsumEntity in bombTargets)
             {
-                Tsum tsumEntityToDelete = chainToResolve[i];
-                if (tsumEntityToDelete == null)
+                if (tsumEntity != null && tsumEntity.TsumView != null)
                 {
-                    continue;
+                    tsumEntity.TsumView.PlayDeletedAnimation();
                 }
+            }
+
+            List<Tsum> finalDeleteList = allTargets.ToList();
+            foreach (var tsumEntityToDelete in finalDeleteList)
+            {
+                if (tsumEntityToDelete == null) continue;
 
                 if (tsumEntityToDelete.TsumView != null)
                 {
@@ -340,45 +471,48 @@ namespace Model.Logic
                 tsumEntityToDelete.DeleteTsum();
             }
 
-            // 進化後のツムを生成
-            int nextTsumID = GetNextLevelTsumID(currentTsumID);
-            if (nextTsumID != -1)
+            if (chainToResolve[0].Type == TsumType.Normal)
             {
-                float startRadius = _tsumData.GetTsumComponentById(currentTsumID).Radius * _tsumData.BaseScale;
-                float targetRadius = _tsumData.GetTsumComponentById(nextTsumID).Radius * _tsumData.BaseScale;
-
-                CreateTsum(nextTsumID, evolvePosition);
-                Tsum newTsum = _allTsumEntity.Last();
-
-                if (newTsum != null && newTsum.TsumView != null)
+                int nextTsumID = GetNextLevelTsumID(currentTsumID);
+                if (nextTsumID != -1)
                 {
-                    // 生成時に弾け飛ぶのを防ぐために物理半径を徐々に拡大
-                    int physicsIndex = newTsum.PhysicsIndex;
-                    _tsumPhysicsManager.SetRadius(physicsIndex, startRadius);
+                    float startRadius = _tsumData.GetTsumComponentById(currentTsumID).Radius * _tsumData.BaseScale;
+                    float targetRadius = _tsumData.GetTsumComponentById(nextTsumID).Radius * _tsumData.BaseScale;
 
-                    float currentRadius = startRadius;
-                    DOTween.To(() =>
+                    CreateTsum(nextTsumID, evolvePosition);
+                    Tsum newTsum = _allTsumEntity.Last();
+
+                    if (newTsum != null && newTsum.TsumView != null)
                     {
-                        return currentRadius;
-                    },
-                    x =>
-                    {
-                        currentRadius = x;
-                        if (newTsum != null && !newTsum.IsDeleting)
+                        int physicsIndex = newTsum.PhysicsIndex;
+                        _tsumPhysicsManager.SetRadius(physicsIndex, startRadius);
+
+                        float currentRadius = startRadius;
+                        DOTween.To(() => currentRadius,
+                        x =>
                         {
-                            _tsumPhysicsManager.SetRadius(newTsum.PhysicsIndex, currentRadius);
-                        }
-                    },
-                    targetRadius,
-                    0.5f)
-                    .SetEase(Ease.OutQuad);
+                            currentRadius = x;
+                            if (newTsum != null && !newTsum.IsDeleting)
+                            {
+                                _tsumPhysicsManager.SetRadius(newTsum.PhysicsIndex, currentRadius);
+                            }
+                        },
+                        targetRadius, 0.5f).SetEase(Ease.OutQuad);
 
-                    newTsum.TsumView.PlaySelectedAnimation();
+                        newTsum.TsumView.PlaySelectedAnimation();
+                    }
                 }
             }
 
-            int score = chainToResolve.Count * 100 * (GetTsumLevel(currentTsumID) + 1);
+            int score = finalDeleteList.Count * 100 * (GetTsumLevel(currentTsumID) + 1);
             _gameModel.Score.Value += score;
+
+            _gameModel.SkillPoint.Value += finalDeleteList.Count;
+        }
+
+        private Tsum FindTsumByPhysicsIndex(int index)
+        {
+            return _allTsumEntity.FirstOrDefault(t => t.PhysicsIndex == index);
         }
 
         private int GetNextLevelTsumID(int currentID)

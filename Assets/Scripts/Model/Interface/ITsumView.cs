@@ -13,6 +13,7 @@ namespace Model.Interface
         void DeleteTsum();
         void SetHighlight(bool isActive);
         void UpdateTransform(Vector2 position, float rotation);
+        void ChangeVisual(Sprite sprite, Color color, Color highlightColor);
 
         void OnSelected();
         void OnUnselected();
