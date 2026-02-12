@@ -98,7 +98,6 @@ namespace Model.Logic
 
             var tsum = new Tsum(tsumID, tsumView, physicsIndex);
 
-            // ▼ ワイルドカード判定: 生成されたIDがワイルドカードのものならタイプを設定
             if (_tsumData.WildcardTsumEntity != null && tsumID == _tsumData.WildcardTsumEntity.ID)
             {
                 tsum.SetType(TsumType.Wildcard);
@@ -107,8 +106,6 @@ namespace Model.Logic
             _allTsumEntity.Add(tsum);
             _viewToEntityMap[tsumView] = tsum;
         }
-
-        // ... OnSelectionStart, OnSelectionEnd, CanConnectTsums など既存メソッドはそのまま維持 ...
 
         // 選択開始時
         public void OnSelectionStart(Tsum firstTsum)
@@ -217,7 +214,6 @@ namespace Model.Logic
             return targetId == _lockedChainID;
         }
 
-        // ▼ 変更: 既存ツムを削除し、新しいワイルドカードツムを生成する
         public void ActivateWildcardSkill(ITsumView targetView)
         {
             if (!_viewToEntityMap.TryGetValue(targetView, out Tsum targetTsum))
@@ -232,22 +228,15 @@ namespace Model.Logic
                 return;
             }
 
-            // 1. 位置情報の確保
             int targetPhysicsIndex = targetTsum.PhysicsIndex;
             Vector2 position = _tsumPhysicsManager.GetTsumPosition(targetPhysicsIndex);
 
-            // 2. 既存ツムの削除
             RemoveTsumInstant(targetTsum);
-
-            // 3. ワイルドカードの新規生成
-            // CreateTsum内でIDチェックが行われ、自動的に TsumType.Wildcard になります
             CreateTsum(wildcardData.ID, position);
 
-            // 4. スキル終了
             _skillManager.CompleteSkillActivation();
         }
 
-        // ヘルパー: ツムを即座に削除する（アニメーションなし）
         private void RemoveTsumInstant(Tsum tsum)
         {
             if (tsum == null) return;
@@ -261,8 +250,6 @@ namespace Model.Logic
             _allTsumEntity.Remove(tsum);
             tsum.DeleteTsum();
         }
-
-        // ... UpdateSelection など既存メソッドは維持 ...
 
         public void UpdateSelection(ITsumView touchedTsumView)
         {
@@ -394,8 +381,6 @@ namespace Model.Logic
                 }
             }
         }
-
-        // ... ResolveChain なども維持 ...
 
         public async UniTask ResolveChain(List<Tsum> chainToResolve)
         {
