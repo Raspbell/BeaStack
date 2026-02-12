@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace View
@@ -8,13 +9,15 @@ namespace View
         [SerializeField] private float _rightX = 3f;
         [SerializeField] private float _bottomY = -5f;
         [SerializeField] private float _topY = 5f;
+        [SerializeField] private float _deadLineY = 0f;
 
         public float LeftX => _leftX;
         public float RightX => _rightX;
         public float BottomY => _bottomY;
         public float TopY => _topY;
+        public float DeadLineY => _deadLineY;
 
-# if UNITY_EDITOR
+#if UNITY_EDITOR
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.green;
@@ -27,7 +30,12 @@ namespace View
             Gizmos.DrawLine(topRight, bottomRight);
             Gizmos.DrawLine(bottomRight, bottomLeft);
             Gizmos.DrawLine(bottomLeft, topLeft);
+
+            Gizmos.color = Color.red;
+            Vector3 gameOverLeft = new Vector3(_leftX, _deadLineY, 0f);
+            Vector3 gameOverRight = new Vector3(_rightX, _deadLineY, 0f);
+            Gizmos.DrawLine(gameOverLeft, gameOverRight);
         }
-# endif
+#endif
     }
 }

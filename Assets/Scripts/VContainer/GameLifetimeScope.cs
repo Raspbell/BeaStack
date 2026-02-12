@@ -7,6 +7,7 @@ using Model.Logic;
 using Model.Data;
 using View;
 using Presenter;
+using GameDebug;
 
 public class GameLifetimeScope : LifetimeScope
 {
@@ -22,7 +23,6 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private InputEventHandler _inputEventHandler;
     [SerializeField] private GameDebugView _gameDebugView;
     [SerializeField] private ChainLineHandler _chainLineHandler;
-    [SerializeField] private GameOverZone _gameOverZone;
     [SerializeField] private PhysicsBoundary _physicsBoundary;
 
     protected override void Configure(IContainerBuilder builder)
@@ -40,11 +40,6 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponent(_tsumSpawner).AsImplementedInterfaces().AsSelf();
         builder.RegisterComponent(_chainLineHandler).AsImplementedInterfaces().AsSelf();
 
-        if (_gameOverZone != null)
-        {
-            builder.RegisterComponent(_gameOverZone);
-        }
-
         builder.Register<GameModel>(Lifetime.Singleton);
 
         builder.Register<PuzzleRule>(Lifetime.Singleton);
@@ -54,6 +49,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.Register<ChainManager>(Lifetime.Singleton);
         builder.Register<TimeTsumSpawnManager>(Lifetime.Singleton);
         builder.Register<PuzzleManager>(Lifetime.Singleton);
+        builder.Register<GameoverManager>(Lifetime.Singleton);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (_gameDebugView != null)

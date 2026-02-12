@@ -1,6 +1,7 @@
 using UnityEngine;
 using UniRx;
 using System;
+using UnityEngine.InputSystem;
 
 namespace View
 {
@@ -17,13 +18,13 @@ namespace View
 
         private void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (Mouse.current.leftButton.wasPressedThisFrame)
             {
                 _onInputStart.OnNext(Unit.Default);
                 _isInputActive = true;
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (Mouse.current.leftButton.wasReleasedThisFrame)
             {
                 _onInputEnd.OnNext(Unit.Default);
                 _isInputActive = false;
@@ -32,7 +33,7 @@ namespace View
 
         public TsumView SelectTsum()
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
             TsumView tsum = hit.collider?.GetComponent<TsumView>();

@@ -16,22 +16,43 @@ MonoBehaviour:
   TsumEntities:
   - ID: 0
     Name: 
-    Radius: 0.25
+    Radius: 0.2
     Score: 0
-    Sprite: {fileID: 0}
-    Color: {r: 0, g: 1, b: 0.15586257, a: 1}
+    Sprite: {fileID: 21300000, guid: 4f3f0405d89d4c94e9fccfaaa84676ed, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
   - ID: 1
     Name: 
-    Radius: 0.3
+    Radius: 0.23
     Score: 0
-    Sprite: {fileID: 0}
-    Color: {r: 1, g: 0, b: 0, a: 1}
+    Sprite: {fileID: 21300000, guid: 05e87356d30bded4f91e4cda9a2333d8, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
   - ID: 2
     Name: 
+    Radius: 0.26
+    Score: 0
+    Sprite: {fileID: 21300000, guid: cdd71370d2f20164fbedf2f81d6455b2, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+  - ID: 3
+    Name: 
+    Radius: 0.29
+    Score: 0
+    Sprite: {fileID: 21300000, guid: ba83a6039f80ad54a900db8e24f346d3, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+  - ID: 4
+    Name: 
+    Radius: 0.32
+    Score: 0
+    Sprite: {fileID: 21300000, guid: ee48436ea29607f49ba3e6dcb171484c, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+  - ID: 5
+    Name: 
     Radius: 0.35
     Score: 0
-    Sprite: {fileID: 0}
-    Color: {r: 0.96632445, g: 1, b: 0, a: 1}
+    Sprite: {fileID: 21300000, guid: 252462e407ea8734dbbbce6939d6c25d, type: 3}
+    Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}

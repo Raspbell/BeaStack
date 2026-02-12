@@ -31,8 +31,7 @@ namespace Presenter
         private InputEventHandler _inputEventHandler;
         private ChainLineHandler _chainLineHandler;
         private PhysicsBoundary _physicsBoundary;
-
-        private GameOverZone _gameOverZone;
+        private GameoverManager _gameoverManager;
 
         private GameData _gameData;
         private TsumData _tsumData;
@@ -52,8 +51,8 @@ namespace Presenter
             InputEventHandler inputEventHandler,
             ReadyAnimationEvent readyAnimationEvent,
             ChainLineHandler chainLineHandler,
-            GameOverZone gameOverZone,
             PhysicsBoundary physicsBoundary,
+            GameoverManager gameoverManager,
             GameData gameData,
             TsumData tsumData
         )
@@ -69,8 +68,8 @@ namespace Presenter
             _inputEventHandler = inputEventHandler;
             _readyAnimationEvent = readyAnimationEvent;
             _chainLineHandler = chainLineHandler;
-            _gameOverZone = gameOverZone;
             _physicsBoundary = physicsBoundary;
+            _gameoverManager = gameoverManager;
             _gameData = gameData;
             _tsumData = tsumData;
         }
@@ -80,15 +79,10 @@ namespace Presenter
             _tsumSpawner.Initialize(_tsumData, _gameUIView);
             _timeManager.Initialize();
 
-            if (_gameOverZone != null)
-            {
-                _gameOverZone.Initialize(_gameData.GameOverGraceTime);
-            }
-
             BindGameState();
             BindModelDataUpdate();
             BindViewUpdate();
-            BindGameOverZone();
+            // BindGameOverZone();
 
             StartGame();
         }
@@ -132,6 +126,13 @@ namespace Presenter
             }
 
             _tsumPhysicsManager.UpdateAllTsumPosition(Time.fixedDeltaTime, _physicsBoundary.LeftX, _physicsBoundary.RightX, _physicsBoundary.BottomY, _physicsBoundary.TopY);
+            _tsumPhysicsManager.SetGameoverTargetByHeight(_physicsBoundary.DeadLineY);
+            bool existTsumAboveDeadLine = _tsumPhysicsManager.ExistTsumAboveDeadLine(_physicsBoundary.DeadLineY);
+            _gameUIView.UpdateDeadLineAlpha(_gameoverManager.GetGraceProgress(_gameData.GameOverGraceTime));
+            if (_gameoverManager.IsGameover(Time.fixedDeltaTime, existTsumAboveDeadLine, _gameData.GameOverGraceTime))
+            {
+                _gameModel.CurrentGameState.Value = GameModel.GameState.GameOver;
+            }
         }
 
         public void Dispose()
@@ -207,22 +208,21 @@ namespace Presenter
                 })
                 .AddTo(_disposables);
 
+            _gameUIView.OnSpawnButtonClicked
+                .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
+                .Subscribe(_ =>
+                {
+                    int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
+                    Vector2 spawnPosition = _tsumSpawner.GetRandomSpawnPosition();
+                    _puzzleManager.CreateTsum(randomTsumId, spawnPosition);
+                })
+                .AddTo(_disposables);
+
         }
 
         private void BindGameOverZone()
         {
-            if (_gameOverZone == null)
-            {
-                return;
-            }
 
-            _gameOverZone.OnGameOver
-                .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
-                .Subscribe(_ =>
-                {
-                    _gameModel.CurrentGameState.Value = GameModel.GameState.GameOver;
-                })
-                .AddTo(_disposables);
         }
 
         private void SpawnInitialTsums()

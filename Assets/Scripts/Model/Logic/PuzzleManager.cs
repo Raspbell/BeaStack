@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Collections.Generic;
 using System.Linq;
 using Model.Interface;
@@ -33,19 +34,10 @@ namespace Model.Logic
         public Tsum LastSelectedTsum => _lastSelectedTsum;
 
         private int _currentSelectingTsumID = -1;
-        public int CurrentSelectingTsumID
-        {
-            get { return _currentSelectingTsumID; }
-            set { _currentSelectingTsumID = value; }
-        }
+        public int CurrentSelectingTsumID => _currentSelectingTsumID;
 
         private bool _isSelectionActive = false;
-        public bool IsSelectionActive
-        {
-            get { return _isSelectionActive; }
-            set { _isSelectionActive = value; }
-        }
-
+        public bool IsSelectionActive => _isSelectionActive;
 
         public PuzzleManager
         (
@@ -352,10 +344,35 @@ namespace Model.Logic
             int nextTsumID = GetNextLevelTsumID(currentTsumID);
             if (nextTsumID != -1)
             {
+                float startRadius = _tsumData.GetTsumComponentById(currentTsumID).Radius * _tsumData.BaseScale;
+                float targetRadius = _tsumData.GetTsumComponentById(nextTsumID).Radius * _tsumData.BaseScale;
+
                 CreateTsum(nextTsumID, evolvePosition);
                 Tsum newTsum = _allTsumEntity.Last();
+
                 if (newTsum != null && newTsum.TsumView != null)
                 {
+                    // 生成時に弾け飛ぶのを防ぐために物理半径を徐々に拡大
+                    int physicsIndex = newTsum.PhysicsIndex;
+                    _tsumPhysicsManager.SetRadius(physicsIndex, startRadius);
+
+                    float currentRadius = startRadius;
+                    DOTween.To(() =>
+                    {
+                        return currentRadius;
+                    },
+                    x =>
+                    {
+                        currentRadius = x;
+                        if (newTsum != null && !newTsum.IsDeleting)
+                        {
+                            _tsumPhysicsManager.SetRadius(newTsum.PhysicsIndex, currentRadius);
+                        }
+                    },
+                    targetRadius,
+                    0.5f)
+                    .SetEase(Ease.OutQuad);
+
                     newTsum.TsumView.PlaySelectedAnimation();
                 }
             }

@@ -1,6 +1,8 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
+using TMPro;
+using UniRx;
 using DG.Tweening;
 
 namespace View
@@ -8,8 +10,10 @@ namespace View
     public class GameUIView : MonoBehaviour
     {
         [SerializeField] private Image _timerBar;
+        [SerializeField] private Image _deadLineBar;
         [SerializeField] private TextMeshProUGUI _timerText;
         [SerializeField] private TextMeshProUGUI _scoreText;
+        [SerializeField] private Button _spawnButton;
         [SerializeField] private Image _skillPointBar;
         [SerializeField] private Image _feverPointBar;
         [SerializeField] private Animator _readyAnimator;
@@ -18,8 +22,11 @@ namespace View
         [SerializeField] private ParticleSystem _deletedTsumEffect;
 
         [SerializeField] private float scoreCountUpDuration = 0.25f;
+        [SerializeField] private float deadLineMaxAlpha = 0.5f;
 
         private Tween _scoreTween;
+
+        public IObservable<Unit> OnSpawnButtonClicked => _spawnButton.OnClickAsObservable();
 
 
         public void UpdateTimer(float timeRemaining, float maxTime)
@@ -62,6 +69,13 @@ namespace View
                 effect.Play();
                 Destroy(effect.gameObject, effect.main.duration);
             }
+        }
+
+        public void UpdateDeadLineAlpha(float deadLineProgress)
+        {
+            Color color = _deadLineBar.color;
+            color.a = deadLineProgress * deadLineMaxAlpha;
+            _deadLineBar.color = color;
         }
 
         public void PlayReadyAnimation()

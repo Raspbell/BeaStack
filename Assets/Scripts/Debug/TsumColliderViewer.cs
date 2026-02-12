@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace View
+namespace GameDebug
 {
     public class TsumColliderViewer : MonoBehaviour
     {

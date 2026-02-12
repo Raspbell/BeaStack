@@ -6,6 +6,7 @@ namespace Model.Logic
     {
         public bool IsActive;
         public bool IsStatic;
+        public bool IsGameoverTarget;
         public float Radius;
         public Vector2 Position;
         public Vector2 PreviousPosition;

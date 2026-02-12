@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1274462547434358820}
   - component: {fileID: 7011506018152658934}
   - component: {fileID: 727674159038486150}
-  - component: {fileID: 1343830799758325867}
   m_Layer: 0
   m_Name: Tsum
   m_TagString: Untagged
@@ -86,19 +85,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _highlightEffect: {fileID: 6811336431203289412}
   _tsumSpriteObject: {fileID: 3829974913184756790}
---- !u!114 &1343830799758325867
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1709589573650603320}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f2ec2fa55957024fbb80d51c5b673e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::View.TsumColliderViewer
-  _radius: 0.175
 --- !u!1 &3829974913184756790
 GameObject:
   m_ObjectHideFlags: 0
