@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: GameData
   m_EditorClassIdentifier: 
   MaxTsumCount: 100
+  MaxDeletedTsumEffectCount: 100
   InitialTsumCount: 10
-  MaxSkillPoint: 60
+  MaxSkillPoint: 0
   MaxFeverPoint: 0
   GameOverGraceTime: 3
   InitialSpawnInterval: 3
@@ -348,5 +349,5 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  WildcardOnlyVirtualId: 0
-  ExplosionScoreMultiplier: 0.5
+  WildcardOnlyVirtualId: 100
+  ExplosionScoreMultiplier: 2
