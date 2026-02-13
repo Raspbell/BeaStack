@@ -20,15 +20,33 @@ namespace View
         [SerializeField] private Animator _readyAnimator;
         [SerializeField] private TextMeshProUGUI _readyText;
 
-        [SerializeField] private ParticleSystem _deletedTsumEffect;
+        private ParticleSpawner _particleSpawner;
 
         [SerializeField] private float scoreCountUpDuration = 0.25f;
         [SerializeField] private float deadLineMaxAlpha = 0.5f;
 
         private Tween _scoreTween;
 
-        public IObservable<Unit> OnSpawnButtonClicked => _spawnButton.OnClickAsObservable();
-        public IObservable<Unit> OnSkillButtonClicked => _skillButton.OnClickAsObservable();
+        public IObservable<Unit> OnSpawnButtonClicked
+        {
+            get
+            {
+                return _spawnButton.OnClickAsObservable();
+            }
+        }
+
+        public IObservable<Unit> OnSkillButtonClicked
+        {
+            get
+            {
+                return _skillButton.OnClickAsObservable();
+            }
+        }
+
+        public void SetParticleSpawner(ParticleSpawner particleSpawner)
+        {
+            _particleSpawner = particleSpawner;
+        }
 
         public void UpdateTimer(float timeRemaining, float maxTime)
         {
@@ -41,13 +59,24 @@ namespace View
 
         public void UpdateScore(int score)
         {
-            _scoreTween?.Kill();
-            int currentScore = int.Parse(_scoreText.text);
-            _scoreTween = DOTween.To(() => currentScore, x =>
+            if (_scoreTween != null)
             {
-                currentScore = x;
-                _scoreText.text = currentScore.ToString();
-            }, score, scoreCountUpDuration);
+                _scoreTween.Kill();
+            }
+            int currentScore = int.Parse(_scoreText.text);
+            _scoreTween = DOTween.To(
+                () =>
+                {
+                    return currentScore;
+                },
+                x =>
+                {
+                    currentScore = x;
+                    _scoreText.text = currentScore.ToString();
+                },
+                score,
+                scoreCountUpDuration
+            );
         }
 
         public void UpdateSkillPoint(float skillPoint, float maxSkillPoint)
@@ -64,11 +93,13 @@ namespace View
 
         public void PlayDeletedTsumEffect(Vector3 position)
         {
-            if (_deletedTsumEffect != null)
+            if (_particleSpawner != null)
             {
-                ParticleSystem effect = Instantiate(_deletedTsumEffect, position, Quaternion.identity);
-                effect.Play();
-                Destroy(effect.gameObject, effect.main.duration);
+                _particleSpawner.SpawnParticle(position);
+            }
+            else
+            {
+                Debug.LogWarning("GameUIViewのParticleSpawnerが設定されていません。");
             }
         }
 

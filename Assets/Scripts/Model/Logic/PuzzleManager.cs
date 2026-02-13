@@ -42,6 +42,10 @@ namespace Model.Logic
         private bool _isSelectionActive = false;
         public bool IsSelectionActive => _isSelectionActive;
 
+        // UpdateSelectableHighlight用のキャッシュ（GCされないように）
+        private HashSet<Tsum> _visitedCache = new HashSet<Tsum>();
+        private Queue<Tsum> _queueCache = new Queue<Tsum>();
+
         public PuzzleManager
         (
             GameModel gameModel,
@@ -324,22 +328,25 @@ namespace Model.Logic
                 TurnOffAllHighlights();
                 return;
             }
-
             TurnOffAllHighlights();
 
             Tsum startNode = _chainManager.CurrentChain.Last();
-            HashSet<Tsum> visited = new HashSet<Tsum>(_chainManager.CurrentChain);
-            Queue<Tsum> queue = new Queue<Tsum>();
-            queue.Enqueue(startNode);
-
-            while (queue.Count > 0)
+            _visitedCache.Clear();
+            foreach (var tsum in _chainManager.CurrentChain)
             {
-                Tsum current = queue.Dequeue();
+                _visitedCache.Add(tsum);
+            }
+            _queueCache.Clear();
+            _queueCache.Enqueue(startNode);
+
+            while (_queueCache.Count > 0)
+            {
+                Tsum current = _queueCache.Dequeue();
                 Vector2 currentPosition = _tsumPhysicsManager.GetTsumPosition(current.PhysicsIndex);
 
                 foreach (var neighborEntity in _allTsumEntity)
                 {
-                    if (visited.Contains(neighborEntity)) continue;
+                    if (_visitedCache.Contains(neighborEntity)) continue;
 
                     Vector2 neighborPosition = _tsumPhysicsManager.GetTsumPosition(neighborEntity.PhysicsIndex);
 
@@ -362,8 +369,8 @@ namespace Model.Logic
 
                         if (isIdOK)
                         {
-                            visited.Add(neighborEntity);
-                            queue.Enqueue(neighborEntity);
+                            _visitedCache.Add(neighborEntity);
+                            _queueCache.Enqueue(neighborEntity);
                             neighborEntity.SetHighlight(true);
                         }
                     }
@@ -429,6 +436,7 @@ namespace Model.Logic
                 if (tsumEntity != null && tsumEntity.TsumView != null)
                 {
                     tsumEntity.TsumView.PlayDeletedAnimation();
+                    _gameModel.SkillPoint.Value++;
                 }
                 await UniTask.Delay((int)(_gameData.ChainClearInterval * 1000));
             }
@@ -491,8 +499,6 @@ namespace Model.Logic
 
             int score = finalDeleteList.Count * 100 * (GetTsumLevel(currentTsumID) + 1);
             _gameModel.Score.Value += score;
-
-            _gameModel.SkillPoint.Value += finalDeleteList.Count;
         }
 
         private Tsum FindTsumByPhysicsIndex(int index)

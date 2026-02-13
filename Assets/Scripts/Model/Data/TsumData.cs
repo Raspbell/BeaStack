@@ -21,6 +21,7 @@ public class TsumData : ScriptableObject
         public Sprite Sprite;
         public Color Color;
         public Color HighlightColor;
+        public float ExplosionRadius; // ワイルドカードのみ
     }
 
     public TsumComponent GetTsumComponentById(int tsumId)

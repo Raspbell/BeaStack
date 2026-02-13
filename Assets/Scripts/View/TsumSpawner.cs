@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using Model.Interface;
+using Cysharp.Threading.Tasks;
 
 namespace View
 {
@@ -11,14 +12,14 @@ namespace View
         [SerializeField] private TsumView _tsumPrefab;
         [SerializeField] private float _spawnZPosition = -1f;
 
-        [SerializeField] private int _defaultCapacity = 50;
-        [SerializeField] private int _maxSize = 100;
+        // [SerializeField] private int _defaultCapacity = 100;
+        // [SerializeField] private int _maxSize = 100;
 
         private TsumData _tsumData;
         private GameUIView _gameUIView;
         private IObjectPool<TsumView> _tsumPool;
 
-        public void Initialize(TsumData tsumData, GameUIView gameUIView)
+        public void Initialize(TsumData tsumData, GameUIView gameUIView, int maxTsumCount)
         {
             _tsumData = tsumData;
             _gameUIView = gameUIView;
@@ -29,9 +30,11 @@ namespace View
                 actionOnRelease: OnReleaseTsum,
                 actionOnDestroy: OnDestroyTsum,
                 collectionCheck: true,
-                defaultCapacity: _defaultCapacity,
-                maxSize: _maxSize
+                defaultCapacity: maxTsumCount,
+                maxSize: maxTsumCount
             );
+
+            PrewarmPool(maxTsumCount);
         }
 
         public Vector2 GetRandomSpawnPosition()
@@ -51,6 +54,20 @@ namespace View
             }
             ITsumView newTsumView = GetTsumFromPool(tsumId, position);
             return newTsumView;
+        }
+
+        private void PrewarmPool(int count)
+        {
+            List<TsumView> prewarmedTsums = new List<TsumView>(count);
+            for (int i = 0; i < count; i++)
+            {
+                prewarmedTsums.Add(_tsumPool.Get());
+            }
+
+            foreach (var tsum in prewarmedTsums)
+            {
+                _tsumPool.Release(tsum);
+            }
         }
 
         private ITsumView GetTsumFromPool(int tsumId, Vector2 position)

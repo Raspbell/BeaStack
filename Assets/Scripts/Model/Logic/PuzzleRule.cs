@@ -1,5 +1,6 @@
 using UnityEngine;
 using Model.Data;
+using System.Collections.Generic;
 
 namespace Model.Logic
 {
@@ -9,9 +10,11 @@ namespace Model.Logic
         public float MinChainCountToClear;
 
         private GameModel _gameModel;
+        private GameData _gameData;
 
         public PuzzleRule(GameData gameData, GameModel gameModel)
         {
+            _gameData = gameData;
             TsumConnectDistance = gameData.TsumConnectDistance;
             MinChainCountToClear = gameData.MinChainCountToClear;
             _gameModel = gameModel;
@@ -33,31 +36,67 @@ namespace Model.Logic
             return tsumData.TsumEntities[randomIdx].ID;
         }
 
-        public void AddChainScore(int chainLength, int tsumScore, bool isFever)
+        public int CalculateScore(List<Tsum> chain, List<Tsum> bombTargets, TsumData tsumData)
         {
-            if (chainLength < MinChainCountToClear)
+            if (chain == null || chain.Count == 0)
             {
-                return;
+                return 0;
             }
-        }
 
-        public void AddFeverPoints(int points)
-        {
-            if (_gameModel == null)
+            int mainTsumId = -1;
+            int wildcardCount = 0;
+            float baseChainScore = 0f;
+
+            foreach (var tsum in chain)
             {
-                return;
+                var tsumComponent = tsumData.GetTsumComponentById(tsum.TsumID);
+                if (tsumComponent != null)
+                {
+                    baseChainScore += tsumComponent.Score;
+                }
+
+                if (tsum.Type == TsumType.Wildcard)
+                {
+                    wildcardCount++;
+                }
+                else
+                {
+                    mainTsumId = tsum.TsumID;
+                }
             }
-            _gameModel.FeverPoint.Value = Mathf.Min(_gameModel.FeverPoint.Value + points, _gameModel.FeverPoint.Value);
-        }
 
-        public void AddScore(int score)
-        {
-            _gameModel.Score.Value += score;
-        }
+            if (mainTsumId == -1)
+            {
+                mainTsumId = _gameData.WildcardOnlyVirtualId;
+            }
 
-        public void AddSkillPoints(int score)
-        {
-            _gameModel.SkillPoint.Value += score;
+            float chainLengthMultiplier = _gameData.ChainLengthBonusCurve.Evaluate(chain.Count);
+            float rankMultiplier = _gameData.TsumIdRankBonusCurve.Evaluate(mainTsumId);
+
+            float wildcardBonusMultiplier = 1.0f;
+            if (wildcardCount > 0)
+            {
+                wildcardBonusMultiplier = 1.0f + (wildcardCount * _gameData.WildcardInvolvementBonusCurve.Evaluate(mainTsumId));
+            }
+
+            float totalChainScore = baseChainScore * chainLengthMultiplier * rankMultiplier * wildcardBonusMultiplier;
+
+            float totalBombScore = 0f;
+            if (bombTargets != null && bombTargets.Count > 0)
+            {
+                float baseBombScore = 0f;
+                foreach (var tsum in bombTargets)
+                {
+                    var tsumComponent = tsumData.GetTsumComponentById(tsum.TsumID);
+                    if (tsumComponent != null)
+                    {
+                        baseBombScore += tsumComponent.Score;
+                    }
+                }
+                totalBombScore = baseBombScore * _gameData.ExplosionScoreMultiplier;
+            }
+
+            return Mathf.RoundToInt(totalChainScore + totalBombScore);
         }
     }
 }

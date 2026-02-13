@@ -17,36 +17,41 @@ MonoBehaviour:
   - ID: 0
     Name: 
     Radius: 0.2
-    Score: 0
+    Score: 50
     Sprite: {fileID: 21300000, guid: 4f3f0405d89d4c94e9fccfaaa84676ed, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+    ExplosionRadius: 0
   - ID: 1
     Name: 
     Radius: 0.23
-    Score: 0
+    Score: 100
     Sprite: {fileID: 21300000, guid: 05e87356d30bded4f91e4cda9a2333d8, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+    ExplosionRadius: 0
   - ID: 2
     Name: 
     Radius: 0.26
-    Score: 0
+    Score: 200
     Sprite: {fileID: 21300000, guid: cdd71370d2f20164fbedf2f81d6455b2, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+    ExplosionRadius: 0
   - ID: 3
     Name: 
     Radius: 0.29
-    Score: 0
+    Score: 400
     Sprite: {fileID: 21300000, guid: ba83a6039f80ad54a900db8e24f346d3, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+    ExplosionRadius: 0
   WildcardTsumEntity:
     ID: 100
     Name: 
     Radius: 0.2
-    Score: 0
+    Score: 5000
     Sprite: {fileID: 21300000, guid: ee48436ea29607f49ba3e6dcb171484c, type: 3}
     Color: {r: 1, g: 1, b: 1, a: 1}
     HighlightColor: {r: 1, g: 1, b: 1, a: 0.2}
+    ExplosionRadius: 1

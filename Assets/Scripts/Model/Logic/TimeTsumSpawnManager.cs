@@ -43,8 +43,12 @@ namespace Model.Logic
 
         private void UpdateDifficulty()
         {
-            float targetInterval = _gameData.InitialSpawnInterval - _gameData.SpawnIntervalDecrement * _totalTimeElapsed;
-            _currentSpawnInterval = Mathf.Max(_gameData.MinSpawnInterval, targetInterval);
+            float startRate = 1f / _gameData.InitialSpawnInterval;
+            float maxDifficultyRate = 1f / _gameData.MinSpawnInterval;
+
+            float currentRate = Mathf.LerpUnclamped(startRate, maxDifficultyRate, _totalTimeElapsed / _gameData.timeToMaxDifficulity);
+
+            _currentSpawnInterval = 1f / currentRate;
         }
     }
 }

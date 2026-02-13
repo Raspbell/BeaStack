@@ -16,12 +16,13 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private TsumData _tsumData;
     [SerializeField] private PhysicsData _physicsData;
 
-    [Header("View Components")]
+    [Header("View")]
     [SerializeField] private GameUIView _gameUIView;
     [SerializeField] private TsumSpawner _tsumSpawner;
     [SerializeField] private ReadyAnimationEvent _readyAnimationEvent;
     [SerializeField] private InputEventHandler _inputEventHandler;
     [SerializeField] private GameDebugView _gameDebugView;
+    [SerializeField] private ParticleSpawner _particleSpawner;
     [SerializeField] private ChainLineHandler _chainLineHandler;
     [SerializeField] private PhysicsBoundary _physicsBoundary;
 
@@ -36,6 +37,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponent(_readyAnimationEvent);
         builder.RegisterComponent(_inputEventHandler);
         builder.RegisterComponent(_physicsBoundary);
+        builder.RegisterComponent(_particleSpawner);
 
         builder.RegisterComponent(_tsumSpawner).AsImplementedInterfaces().AsSelf();
         builder.RegisterComponent(_chainLineHandler).AsImplementedInterfaces().AsSelf();

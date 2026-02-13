@@ -18,13 +18,13 @@ namespace View
 
         private void Update()
         {
-            if (Mouse.current.leftButton.wasPressedThisFrame)
+            if (Pointer.current.press.wasPressedThisFrame)
             {
                 _onInputStart.OnNext(Unit.Default);
                 _isInputActive = true;
             }
 
-            if (Mouse.current.leftButton.wasReleasedThisFrame)
+            if (Pointer.current.press.wasReleasedThisFrame)
             {
                 _onInputEnd.OnNext(Unit.Default);
                 _isInputActive = false;
@@ -33,7 +33,7 @@ namespace View
 
         public TsumView SelectTsum()
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Pointer.current.position.ReadValue());
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
             TsumView tsum = hit.collider?.GetComponent<TsumView>();

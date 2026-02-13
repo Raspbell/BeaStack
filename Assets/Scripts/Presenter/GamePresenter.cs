@@ -28,6 +28,7 @@ namespace Presenter
 
         private GameUIView _gameUIView;
         private TsumSpawner _tsumSpawner;
+        private ParticleSpawner _particleSpawner;
         private ReadyAnimationEvent _readyAnimationEvent;
         private InputEventHandler _inputEventHandler;
         private ChainLineHandler _chainLineHandler;
@@ -50,6 +51,7 @@ namespace Presenter
             PuzzleRule puzzleRule,
             GameUIView gameUIView,
             TsumSpawner tsumSpawner,
+            ParticleSpawner particleSpawner,
             InputEventHandler inputEventHandler,
             ReadyAnimationEvent readyAnimationEvent,
             ChainLineHandler chainLineHandler,
@@ -68,6 +70,7 @@ namespace Presenter
             _puzzleRule = puzzleRule;
             _gameUIView = gameUIView;
             _tsumSpawner = tsumSpawner;
+            _particleSpawner = particleSpawner;
             _inputEventHandler = inputEventHandler;
             _readyAnimationEvent = readyAnimationEvent;
             _chainLineHandler = chainLineHandler;
@@ -79,13 +82,16 @@ namespace Presenter
 
         public void Start()
         {
-            _tsumSpawner.Initialize(_tsumData, _gameUIView);
+            _tsumSpawner.Initialize(_tsumData, _gameUIView, _gameData.MaxTsumCount);
+            _particleSpawner.Initialize(_gameData.MaxDeletedTsumEffectCount);
+
+            _gameUIView.SetParticleSpawner(_particleSpawner);
+
             _timeManager.Initialize();
 
             BindGameState();
             BindModelDataUpdate();
             BindViewUpdate();
-            // BindGameOverZone();
 
             StartGame();
         }
@@ -102,17 +108,9 @@ namespace Presenter
                 return;
             }
 
-            if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
-            {
-                return;
-            }
-
             float alpha = (Time.time - Time.fixedTime) / Time.fixedDeltaTime;
             foreach (var tsum in _puzzleManager.AllTsums)
             {
-                // Vector2 tsumPosition = _tsumPhysicsManager.GetTsumPosition(tsum.PhysicsIndex);
-                // tsum.TsumView.UpdatePosition(new Vector3(tsumPosition.x, tsumPosition.y));
-
                 Vector2 interpolatedPos = _tsumPhysicsManager.GetInterpolatedPosition(tsum.PhysicsIndex, alpha);
                 float interpolatedRotation = _tsumPhysicsManager.GetInterpolatedRotation(tsum.PhysicsIndex, alpha);
                 tsum.TsumView.UpdateTransform(interpolatedPos, interpolatedRotation);
@@ -143,11 +141,6 @@ namespace Presenter
                 return;
             }
 
-            if (_gameModel.CurrentGameState.Value != GameModel.GameState.Playing)
-            {
-                return;
-            }
-
             _tsumPhysicsManager.UpdateAllTsumPosition(Time.fixedDeltaTime, _physicsBoundary.LeftX, _physicsBoundary.RightX, _physicsBoundary.BottomY, _physicsBoundary.TopY);
             _tsumPhysicsManager.SetGameoverTargetByHeight(_physicsBoundary.DeadLineY);
             bool existTsumAboveDeadLine = _tsumPhysicsManager.ExistTsumAboveDeadLine(_physicsBoundary.DeadLineY);
@@ -172,14 +165,20 @@ namespace Presenter
                     switch (state)
                     {
                         case GameModel.GameState.Ready:
-                            _gameUIView.PlayReadyAnimation();
-                            break;
+                            {
+                                _gameUIView.PlayReadyAnimation();
+                                break;
+                            }
                         case GameModel.GameState.Playing:
-                            SpawnInitialTsums();
-                            break;
+                            {
+                                SpawnInitialTsums();
+                                break;
+                            }
                         case GameModel.GameState.GameOver:
-                            Debug.Log("Game Over!");
-                            break;
+                            {
+                                Debug.Log("Game Over!");
+                                break;
+                            }
                     }
                 })
                 .AddTo(_disposables);
@@ -189,17 +188,26 @@ namespace Presenter
         {
             _gameModel.Score
                 .DistinctUntilChanged()
-                .Subscribe(score => _gameUIView.UpdateScore(score))
+                .Subscribe(score =>
+                {
+                    _gameUIView.UpdateScore(score);
+                })
                 .AddTo(_disposables);
 
             _gameModel.SkillPoint
                 .DistinctUntilChanged()
-                .Subscribe(skillPoint => _gameUIView.UpdateSkillPoint(skillPoint, _gameData.MaxSkillPoint))
+                .Subscribe(skillPoint =>
+                {
+                    _gameUIView.UpdateSkillPoint(skillPoint, _gameData.MaxSkillPoint);
+                })
                 .AddTo(_disposables);
 
             _gameModel.FeverPoint
                 .DistinctUntilChanged()
-                .Subscribe(feverPoint => _gameUIView.UpdateFeverPoint(feverPoint, _gameData.MaxFeverPoint))
+                .Subscribe(feverPoint =>
+                {
+                    _gameUIView.UpdateFeverPoint(feverPoint, _gameData.MaxFeverPoint);
+                })
                 .AddTo(_disposables);
         }
 
@@ -207,16 +215,21 @@ namespace Presenter
         {
             _readyAnimationEvent.OnReady
                 .DistinctUntilChanged()
-                .Subscribe(_ => _gameModel.CurrentGameState.Value = GameModel.GameState.Playing)
+                .Subscribe(_ =>
+                {
+                    _gameModel.CurrentGameState.Value = GameModel.GameState.Playing;
+                })
                 .AddTo(_disposables);
 
             _inputEventHandler.OnInputStart
-                .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
+                .Where(_ =>
+                {
+                    return _gameModel.CurrentGameState.Value == GameModel.GameState.Playing;
+                })
                 .Subscribe(_ =>
                 {
                     TsumView touchedTsum = _inputEventHandler.SelectTsum();
 
-                    // スキル待機中
                     if (_skillManager.IsSkillActivationReady.Value)
                     {
                         if (touchedTsum != null)
@@ -226,7 +239,6 @@ namespace Presenter
                         return;
                     }
 
-                    // 通常時
                     if (touchedTsum != null)
                     {
                         _puzzleManager.UpdateSelection(touchedTsum);
@@ -235,7 +247,10 @@ namespace Presenter
                 .AddTo(_disposables);
 
             _inputEventHandler.OnInputEnd
-                .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
+                .Where(_ =>
+                {
+                    return _gameModel.CurrentGameState.Value == GameModel.GameState.Playing;
+                })
                 .Subscribe(_ =>
                 {
                     _puzzleManager.OnSelectionEnd();
@@ -244,7 +259,10 @@ namespace Presenter
                 .AddTo(_disposables);
 
             _gameUIView.OnSpawnButtonClicked
-                .Where(_ => _gameModel.CurrentGameState.Value == GameModel.GameState.Playing)
+                .Where(_ =>
+                {
+                    return _gameModel.CurrentGameState.Value == GameModel.GameState.Playing;
+                })
                 .Subscribe(_ =>
                 {
                     int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
@@ -254,14 +272,15 @@ namespace Presenter
                 .AddTo(_disposables);
 
             _gameUIView.OnSkillButtonClicked
-                .Subscribe(_ => _skillManager.ActivateSkill())
+                .Subscribe(_ =>
+                {
+                    _skillManager.ActivateSkill();
+                })
                 .AddTo(_disposables);
-
         }
 
         private void BindGameOverZone()
         {
-
         }
 
         private void SpawnInitialTsums()

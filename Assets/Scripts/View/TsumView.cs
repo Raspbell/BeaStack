@@ -68,14 +68,19 @@ namespace View
 
             transform.localScale = Vector3.one * tsumScale;
 
-            if (_spriteRenderer != null)
+            if (_tsumSprite != null)
             {
-                if (_tsumSprite != null)
+                if (_spriteRenderer != null)
                 {
                     _spriteRenderer.sprite = _tsumSprite;
+                    _spriteRenderer.color = _tsumColor;
                 }
 
-                _spriteRenderer.color = _tsumColor;
+                // むしろ見づらかったので削除
+                // if (_highlightSpriteRenderer != null)
+                // {
+                //     _highlightSpriteRenderer.sprite = _tsumSprite;
+                // }
             }
 
             if (_highlightSpriteRenderer != null)
