@@ -15,7 +15,7 @@ MonoBehaviour:
   MaxTsumCount: 100
   MaxDeletedTsumEffectCount: 100
   InitialTsumCount: 10
-  MaxSkillPoint: 0
+  MaxSkillPoint: 50
   MaxFeverPoint: 0
   GameOverGraceTime: 3
   InitialSpawnInterval: 3

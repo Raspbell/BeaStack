@@ -215,6 +215,10 @@ namespace Presenter
                 .Subscribe(isReady =>
                 {
                     _gameUIView.SetSkillCurtainActive(isReady);
+                    if (isReady)
+                    {
+                        _gameUIView.PlaySkillInvocablePopEffect();
+                    }
                 })
                 .AddTo(_disposables);
         }
@@ -280,6 +284,10 @@ namespace Presenter
                 .AddTo(_disposables);
 
             _gameUIView.OnSkillButtonClicked
+                .Where(_ =>
+                {
+                    return _gameModel.CurrentGameState.Value == GameModel.GameState.Playing;
+                })
                 .Subscribe(_ =>
                 {
                     _skillManager.ActivateSkill();

@@ -14,11 +14,15 @@ namespace InGame.View
         [SerializeField] private TextMeshProUGUI _timerText;
         [SerializeField] private TextMeshProUGUI _scoreText;
         [SerializeField] private Button _spawnButton;
+
         [SerializeField] private Button _skillButton;
         [SerializeField] private Image _skillPointBar;
-        [SerializeField] private Image _feverPointBar;
+        [SerializeField] private Image _skillButtonAnimalIcon;
         [SerializeField] private Image[] _skillCurtains;
         [SerializeField] private TextMeshProUGUI _tapText;
+        [SerializeField] private Material _skillBarMaterial;
+
+        [SerializeField] private Image _feverPointBar;
         [SerializeField] private Animator _readyAnimator;
         [SerializeField] private TextMeshProUGUI _readyText;
 
@@ -27,10 +31,12 @@ namespace InGame.View
         [SerializeField] private float _scoreCountUpDuration = 0.25f;
         [SerializeField] private float _skillCurtainMaxAlpha = 0.8f;
         [SerializeField] private float _skillCurtainFadeDuration = 0.3f;
+        [SerializeField] private float _skillInvocablePopDuration = 0.5f;
         [SerializeField] private float _deadLineMaxAlpha = 0.5f;
 
         private Tween _scoreTween;
         private float _tapTextInitialScale;
+        private bool _wasSkillInocable = false;
 
         public IObservable<Unit> OnSpawnButtonClicked => _spawnButton.OnClickAsObservable();
         public IObservable<Unit> OnSkillButtonClicked => _skillButton.OnClickAsObservable();
@@ -64,7 +70,7 @@ namespace InGame.View
                 _tapText.color = new Color(_tapText.color.r, _tapText.color.g, _tapText.color.b, 0f);
                 Sequence sequence = DOTween.Sequence();
                 sequence.Append(_tapText.DOFade(1f, _skillCurtainFadeDuration))
-                    .Join(_tapText.transform.DOScale(1.2f, _skillCurtainFadeDuration).SetEase(Ease.OutBack)).SetLoops(1, LoopType.Yoyo);
+                    .Join(_tapText.transform.DOScale(1.2f, _skillCurtainFadeDuration).SetEase(Ease.OutBack)).SetLoops(2, LoopType.Yoyo);
                 sequence.Play();
             }
             else
@@ -113,12 +119,34 @@ namespace InGame.View
         {
             float fillAmount = skillPoint / maxSkillPoint;
             _skillPointBar.fillAmount = fillAmount;
+
+            if (skillPoint >= maxSkillPoint)
+            {
+                _skillPointBar.material = _skillBarMaterial;
+                if (!_wasSkillInocable)
+                {
+                    PlaySkillInvocablePopEffect();
+                    _wasSkillInocable = true;
+                }
+            }
+            else
+            {
+                _skillPointBar.material = null;
+                _wasSkillInocable = false;
+            }
         }
 
         public void UpdateFeverPoint(float feverPoint, float maxFeverPoint)
         {
             float fillAmount = feverPoint / maxFeverPoint;
             _feverPointBar.fillAmount = fillAmount;
+        }
+
+        public void UpdateDeadLineAlpha(float deadLineProgress)
+        {
+            Color color = _deadLineBar.color;
+            color.a = deadLineProgress * _deadLineMaxAlpha;
+            _deadLineBar.color = color;
         }
 
         public void PlayDeletedTsumEffect(Vector3 position)
@@ -133,11 +161,11 @@ namespace InGame.View
             }
         }
 
-        public void UpdateDeadLineAlpha(float deadLineProgress)
+        public void PlaySkillInvocablePopEffect()
         {
-            Color color = _deadLineBar.color;
-            color.a = deadLineProgress * _deadLineMaxAlpha;
-            _deadLineBar.color = color;
+            _skillButtonAnimalIcon.transform.DOKill();
+            _skillButtonAnimalIcon.transform.localScale = Vector3.one;
+            _skillButtonAnimalIcon.transform.DOScale(1.2f, _skillInvocablePopDuration).SetEase(Ease.OutBack).SetLoops(2, LoopType.Yoyo);
         }
 
         public void PlayReadyAnimation()

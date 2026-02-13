@@ -4,12 +4,14 @@ using UniRx;
 using UnityEngine.SceneManagement;
 using System;
 using UnityEngine;
-using Model;
-using Model.Data;
-using Model.Logic;
-using Model.Interface;
+using InGame.Model;
+using InGame.Model.Data;
+using InGame.Model.Logic;
+using InGame.Model.Interface;
 
-namespace GameDebug
+using InGame.GameDebug.View;
+
+namespace InGame.GameDebug.Presenter
 {
     public class GameDebugPresenter : IStartable, ITickable, IDisposable
     {

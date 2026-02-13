@@ -95,7 +95,7 @@ namespace InGame.Model.Logic
             ITsumView tsumView = _tsumSpawner.SpawnTsum(
                 tsumID,
                 spawnPosition,
-                radius,
+                tsumComponent.Radius,
                 tsumComponent.Sprite,
                 tsumComponent.Color,
                 tsumComponent.HighlightColor

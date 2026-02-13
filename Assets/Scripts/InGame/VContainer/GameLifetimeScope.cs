@@ -7,7 +7,9 @@ using InGame.Model.Logic;
 using InGame.Model.Data;
 using InGame.View;
 using Presenter;
-using GameDebug;
+
+using InGame.GameDebug.Presenter;
+using InGame.GameDebug.View;
 
 public class GameLifetimeScope : LifetimeScope
 {
