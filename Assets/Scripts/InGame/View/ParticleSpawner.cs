@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.Pool;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace InGame.View
 {
@@ -9,7 +11,7 @@ namespace InGame.View
         [SerializeField] private ParticleView _particlePrefab;
         private ObjectPool<ParticleView> _pool;
 
-        public void Initialize(int maxCount)
+        public async UniTask Initialize(int maxCount)
         {
             _pool = new ObjectPool<ParticleView>(
                 createFunc: CreateParticle,
@@ -21,7 +23,7 @@ namespace InGame.View
                 maxSize: maxCount
             );
 
-            PrewarmPool(maxCount);
+            await PrewarmPool(maxCount);
         }
 
         public void SpawnParticle(Vector3 position)
@@ -58,7 +60,7 @@ namespace InGame.View
             Destroy(particle.gameObject);
         }
 
-        private void PrewarmPool(int count)
+        private async UniTask PrewarmPool(int count)
         {
             List<ParticleView> prewarmed = new List<ParticleView>(count);
             for (int i = 0; i < count; i++)

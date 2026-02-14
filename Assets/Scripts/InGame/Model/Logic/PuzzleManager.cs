@@ -1,4 +1,5 @@
 using UnityEngine;
+using UniRx;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace InGame.Model.Logic
 
         private ITsumSpawner _tsumSpawner;
         private IChainLineHandler _chainLineHandler;
+        private ISEView _seView;
 
         private int _lockedChainID = -1;
 
@@ -42,6 +44,8 @@ namespace InGame.Model.Logic
         private bool _isSelectionActive = false;
         public bool IsSelectionActive => _isSelectionActive;
 
+        // public readonly Subject<Unit> OnBombExploded = new Subject<Unit>();
+
         // UpdateSelectableHighlight用のキャッシュ（GCされないように）
         private HashSet<Tsum> _visitedCache = new HashSet<Tsum>();
         private Queue<Tsum> _queueCache = new Queue<Tsum>();
@@ -56,6 +60,7 @@ namespace InGame.Model.Logic
             TsumPhysicsManager tsumPhysics,
             ITsumSpawner tsumSpawner,
             IChainLineHandler chainLineHandler,
+            ISEView seView,
             SkillManager skillManager
         )
         {
@@ -67,6 +72,7 @@ namespace InGame.Model.Logic
             _tsumPhysicsManager = tsumPhysics;
             _tsumSpawner = tsumSpawner;
             _chainLineHandler = chainLineHandler;
+            _seView = seView;
             _skillManager = skillManager;
         }
 
@@ -245,9 +251,10 @@ namespace InGame.Model.Logic
 
             RemoveTsumInstant(targetTsum);
             Tsum newWildcard = CreateTsum(wildcardData.ID, position);
-            newWildcard.TsumView.PlaySelectedAnimation();
+            newWildcard.TsumView.PlaySelectedAnimation(false);
 
             _skillManager.CompleteSkillActivation();
+            _seView.PlaySkillUsedSound();
         }
 
         private void RemoveTsumInstant(Tsum tsum)
@@ -442,17 +449,21 @@ namespace InGame.Model.Logic
             {
                 if (tsumEntity != null && tsumEntity.TsumView != null)
                 {
-                    tsumEntity.TsumView.PlayDeletedAnimation();
+                    tsumEntity.TsumView.PlayDeletedAnimation(true);
                     _gameModel.SkillPoint.Value++;
                 }
                 await UniTask.Delay((int)(_gameData.ChainClearInterval * 1000));
             }
 
-            foreach (var tsumEntity in bombTargets)
+            if (bombTargets.Count > 0)
             {
-                if (tsumEntity != null && tsumEntity.TsumView != null)
+                _seView.PlayExplosionSound();
+                foreach (var tsumEntity in bombTargets)
                 {
-                    tsumEntity.TsumView.PlayDeletedAnimation();
+                    if (tsumEntity != null && tsumEntity.TsumView != null)
+                    {
+                        tsumEntity.TsumView.PlayDeletedAnimation(false);
+                    }
                 }
             }
 
@@ -499,7 +510,7 @@ namespace InGame.Model.Logic
                         },
                         targetRadius, 0.5f).SetEase(Ease.OutQuad);
 
-                        newTsum.TsumView.PlaySelectedAnimation();
+                        newTsum.TsumView.PlaySelectedAnimation(false);
                     }
                 }
             }

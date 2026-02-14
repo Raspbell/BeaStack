@@ -17,6 +17,7 @@ namespace InGame.View
 
         private Vector3 _initialScale;
         private GameUIView _gameUIView;
+        private SEView _seView;
         private Color _tsumColor;
         private Color _highlightColor;
         private Sprite _tsumSprite;
@@ -41,6 +42,7 @@ namespace InGame.View
 
         public void Initialize(
             GameUIView gameUIView,
+            SEView seView,
             float tsumScale,
             Sprite tsumSprite,
             Color tsumColor,
@@ -49,6 +51,7 @@ namespace InGame.View
         )
         {
             _gameUIView = gameUIView;
+            _seView = seView;
             _tsumSprite = tsumSprite;
             _tsumColor = tsumColor;
             _highlightColor = highlightColor;
@@ -119,17 +122,21 @@ namespace InGame.View
         {
         }
 
-        public void PlaySelectedAnimation()
+        public void PlaySelectedAnimation(bool playSound)
         {
             if (_tsumSpriteObject != null)
             {
                 _tsumSpriteObject.transform.DOKill();
                 _tsumSpriteObject.transform.localScale = Vector3.one;
                 _tsumSpriteObject.transform.DOScale(1.2f, 0.1f).SetLoops(2, LoopType.Yoyo);
+                if (playSound && _seView != null)
+                {
+                    _seView.PlaySelectedSound();
+                }
             }
         }
 
-        public void PlayDeletedAnimation()
+        public void PlayDeletedAnimation(bool playSound)
         {
             if (_spriteRenderer != null)
             {
@@ -138,6 +145,11 @@ namespace InGame.View
             if (_gameUIView != null)
             {
                 _gameUIView.PlayDeletedTsumEffect(transform.position);
+            }
+
+            if (playSound && _seView != null)
+            {
+                _seView.PlayDeletedSound();
             }
         }
 
@@ -175,7 +187,7 @@ namespace InGame.View
         {
             OutlineTsum(true);
             SetHighlight(false);
-            PlaySelectedAnimation();
+            PlaySelectedAnimation(true);
         }
 
         public void OnUnselected()

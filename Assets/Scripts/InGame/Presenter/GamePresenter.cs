@@ -5,7 +5,9 @@ using VContainer;
 using VContainer.Unity;
 using Cysharp.Threading.Tasks;
 using System.Linq;
+using UnityEngine.SceneManagement;
 
+using Initial;
 using InGame.Model;
 using InGame.Model.Logic;
 using InGame.Model.Interface;
@@ -27,6 +29,7 @@ namespace Presenter
         private SkillManager _skillManager;
 
         private GameUIView _gameUIView;
+        private SEView _seView;
         private TsumSpawner _tsumSpawner;
         private ParticleSpawner _particleSpawner;
         private ReadyAnimationEvent _readyAnimationEvent;
@@ -50,6 +53,7 @@ namespace Presenter
             SkillManager skillManager,
             PuzzleRule puzzleRule,
             GameUIView gameUIView,
+            SEView seView,
             TsumSpawner tsumSpawner,
             ParticleSpawner particleSpawner,
             InputEventHandler inputEventHandler,
@@ -69,6 +73,7 @@ namespace Presenter
             _skillManager = skillManager;
             _puzzleRule = puzzleRule;
             _gameUIView = gameUIView;
+            _seView = seView;
             _tsumSpawner = tsumSpawner;
             _particleSpawner = particleSpawner;
             _inputEventHandler = inputEventHandler;
@@ -82,16 +87,28 @@ namespace Presenter
 
         public void Start()
         {
-            _tsumSpawner.Initialize(_gameUIView, _gameData.MaxTsumCount);
-            _particleSpawner.Initialize(_gameData.MaxDeletedTsumEffectCount);
+            StartAsync().Forget();
+        }
+
+        private async UniTaskVoid StartAsync()
+        {
+            await UniTask.WhenAll(
+                _tsumSpawner.Initialize(_gameUIView, _seView, _gameData.MaxTsumCount),
+                _particleSpawner.Initialize(_gameData.MaxDeletedTsumEffectCount)
+            );
 
             _gameUIView.SetParticleSpawner(_particleSpawner);
-
             _timeManager.Initialize();
 
             BindGameState();
             BindModelDataUpdate();
             BindViewUpdate();
+
+            try
+            {
+                FadeMaskManager.FadeOut().Forget();
+            }
+            catch (Exception ex) { }
 
             StartGame();
         }
@@ -160,7 +177,7 @@ namespace Presenter
         {
             _gameModel.CurrentGameState
                 .DistinctUntilChanged()
-                .Subscribe(state =>
+                .Subscribe(async state =>
                 {
                     switch (state)
                     {
@@ -177,6 +194,9 @@ namespace Presenter
                         case GameModel.GameState.GameOver:
                             {
                                 Debug.Log("Game Over!");
+                                _seView.PlayGameOverSound();
+                                await UniTask.Delay(2000);
+                                _gameUIView.ShowGameOver();
                                 break;
                             }
                     }
@@ -199,6 +219,10 @@ namespace Presenter
                 .Subscribe(skillPoint =>
                 {
                     _gameUIView.UpdateSkillPoint(skillPoint, _gameData.MaxSkillPoint);
+                    if (skillPoint == _gameData.MaxSkillPoint)
+                    {
+                        _seView.PlaySkillChargedSound();
+                    }
                 })
                 .AddTo(_disposables);
 
@@ -277,6 +301,7 @@ namespace Presenter
                 })
                 .Subscribe(_ =>
                 {
+                    _seView.PlayDropSound();
                     int randomTsumId = _puzzleRule.GetRandomTsumID(_gameData.MaxSpawnTsumLevelIndex, _tsumData);
                     Vector2 spawnPosition = _tsumSpawner.GetRandomSpawnPosition();
                     _puzzleManager.CreateTsum(randomTsumId, spawnPosition);
@@ -290,8 +315,28 @@ namespace Presenter
                 })
                 .Subscribe(_ =>
                 {
-                    _skillManager.ActivateSkill();
-                    _gameUIView.SetSkillCurtainActive(_gameModel.IsSkillActivationReady.Value);
+                    if (_skillManager.TryActivateSkill())
+                    {
+                        _gameUIView.SetSkillCurtainActive(_gameModel.IsSkillActivationReady.Value);
+                        _seView.PlaySkillActivatedSound();
+                    }
+                })
+                .AddTo(_disposables);
+
+            _gameUIView.OnTitleButtonClicked
+                .Subscribe(async _ =>
+                {
+                    CrossfadeAudioController.ChangeClip(0);
+                    await FadeMaskManager.FadeIn();
+                    SceneManager.LoadScene("Title");
+                })
+                .AddTo(_disposables);
+
+            _gameUIView.OnRetryButtonClicked
+                .Subscribe(async _ =>
+                {
+                    await FadeMaskManager.FadeIn();
+                    SceneManager.LoadScene("InGame");
                 })
                 .AddTo(_disposables);
         }

@@ -16,14 +16,17 @@ namespace InGame.Model.Logic
         }
 
         // スキル発動時の処理
-        public void ActivateSkill()
+        public bool TryActivateSkill()
         {
             if (_gameModel.SkillPoint.Value >= _gameData.MaxSkillPoint)
             {
                 _gameModel.SkillPoint.Value = 0;
                 _gameModel.IsSkillActivationReady.Value = true;
+                return true;
             }
+            return false;
         }
+
 
         // ツムを選択してスキル効果を発動した後の処理
         public void CompleteSkillActivation()

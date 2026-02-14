@@ -26,6 +26,11 @@ namespace InGame.View
         [SerializeField] private Animator _readyAnimator;
         [SerializeField] private TextMeshProUGUI _readyText;
 
+        [SerializeField] private CanvasGroup _gameOverCanvasGroup;
+        [SerializeField] private TextMeshProUGUI _gameOverScoreText;
+        [SerializeField] private Button _titleButton;
+        [SerializeField] private Button _retryButton;
+
         private ParticleSpawner _particleSpawner;
 
         [SerializeField] private float _scoreCountUpDuration = 0.25f;
@@ -33,6 +38,9 @@ namespace InGame.View
         [SerializeField] private float _skillCurtainFadeDuration = 0.3f;
         [SerializeField] private float _skillInvocablePopDuration = 0.5f;
         [SerializeField] private float _deadLineMaxAlpha = 0.5f;
+        [SerializeField] private float _gameOverFadeDuration = 1f;
+        [SerializeField] private Vector3 _gameOverWindowTarget;
+        [SerializeField] private float _gameOverScoreCountUpDuration = 2f;
 
         private Tween _scoreTween;
         private float _tapTextInitialScale;
@@ -40,6 +48,8 @@ namespace InGame.View
 
         public IObservable<Unit> OnSpawnButtonClicked => _spawnButton.OnClickAsObservable();
         public IObservable<Unit> OnSkillButtonClicked => _skillButton.OnClickAsObservable();
+        public IObservable<Unit> OnTitleButtonClicked => _titleButton.OnClickAsObservable();
+        public IObservable<Unit> OnRetryButtonClicked => _retryButton.OnClickAsObservable();
 
         private void Awake()
         {
@@ -147,6 +157,19 @@ namespace InGame.View
             Color color = _deadLineBar.color;
             color.a = deadLineProgress * _deadLineMaxAlpha;
             _deadLineBar.color = color;
+        }
+
+        public void ShowGameOver()
+        {
+            _gameOverCanvasGroup.gameObject.SetActive(true);
+            _gameOverCanvasGroup.alpha = 0f;
+
+            int finalScore = int.Parse(_scoreText.text);
+
+            Sequence sequence = DOTween.Sequence();
+            sequence.Append(_gameOverCanvasGroup.DOFade(1f, _gameOverFadeDuration))
+                .Join(_gameOverCanvasGroup.transform.DOLocalMove(_gameOverWindowTarget, _gameOverFadeDuration))
+                .Join(DOTween.To(() => 0, x => _gameOverScoreText.text = x.ToString(), finalScore, _gameOverScoreCountUpDuration));
         }
 
         public void PlayDeletedTsumEffect(Vector3 position)

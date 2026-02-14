@@ -8,8 +8,8 @@ namespace InGame.Model.Interface
         Vector3 Position { get; }
 
         void SetDeleting();
-        void PlayDeletedAnimation();
-        void PlaySelectedAnimation();
+        void PlayDeletedAnimation(bool playSound);
+        void PlaySelectedAnimation(bool playSound);
         void DeleteTsum();
         void SetHighlight(bool isActive);
         void UpdateTransform(Vector2 position, float rotation);

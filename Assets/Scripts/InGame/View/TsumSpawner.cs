@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using InGame.Model.Interface;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace InGame.View
 {
@@ -15,11 +17,13 @@ namespace InGame.View
         // [SerializeField] private int _maxSize = 100;
 
         private GameUIView _gameUIView;
+        private SEView _seView;
         private IObjectPool<TsumView> _tsumPool;
 
-        public void Initialize(GameUIView gameUIView, int maxTsumCount)
+        public async UniTask Initialize(GameUIView gameUIView, SEView seView, int maxTsumCount)
         {
             _gameUIView = gameUIView;
+            _seView = seView;
 
             _tsumPool = new ObjectPool<TsumView>(
                 createFunc: CreateTsum,
@@ -31,7 +35,7 @@ namespace InGame.View
                 maxSize: maxTsumCount
             );
 
-            PrewarmPool(maxTsumCount);
+            await PrewarmPool(maxTsumCount);
         }
 
         public Vector2 GetRandomSpawnPosition()
@@ -53,7 +57,7 @@ namespace InGame.View
             return newTsumView;
         }
 
-        private void PrewarmPool(int count)
+        private async UniTask PrewarmPool(int count)
         {
             List<TsumView> prewarmedTsums = new List<TsumView>(count);
             for (int i = 0; i < count; i++)
@@ -75,6 +79,7 @@ namespace InGame.View
 
             tsumView.Initialize(
                 _gameUIView,
+                _seView,
                 radius,
                 sprite,
                 color,
