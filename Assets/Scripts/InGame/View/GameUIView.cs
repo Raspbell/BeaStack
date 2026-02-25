@@ -103,13 +103,13 @@ namespace InGame.View
             _timerText.text = displayTime.ToString();
         }
 
-        public void UpdateScore(int score)
+        public void UpdateScore(long score)
         {
             if (_scoreTween != null)
             {
                 _scoreTween.Kill();
             }
-            int currentScore = int.Parse(_scoreText.text);
+            long currentScore = long.Parse(_scoreText.text);
             _scoreTween = DOTween.To(
                 () =>
                 {

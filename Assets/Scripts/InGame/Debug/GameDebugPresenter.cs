@@ -4,6 +4,8 @@ using UniRx;
 using UnityEngine.SceneManagement;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 using InGame.Model;
 using InGame.Model.Data;
 using InGame.Model.Logic;
@@ -15,14 +17,14 @@ namespace InGame.GameDebug.Presenter
 {
     public class GameDebugPresenter : IStartable, ITickable, IDisposable
     {
-        private readonly GameDebugView _view;
-        private readonly GameModel _model;
+        private GameDebugView _view;
+        private GameModel _model;
 
-        private readonly GameoverManager _gameoverManager;
-        private readonly TsumPhysicsManager _physicsManager;
-        private readonly GameData _gameData;
-        private readonly PuzzleManager _puzzleManager;
-        private readonly ITsumSpawner _tsumSpawner;
+        private GameoverManager _gameoverManager;
+        private TsumPhysicsManager _physicsManager;
+        private GameData _gameData;
+        private PuzzleManager _puzzleManager;
+        private ITsumSpawner _tsumSpawner;
 
         private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
@@ -101,7 +103,6 @@ namespace InGame.GameDebug.Presenter
                 return;
             }
 
-            // データを取得してViewへ流す
             float currentGrace = _gameoverManager.CurrentGraceTime;
             float maxGrace = _gameData.GameOverGraceTime;
             int targetCount = _physicsManager.GetGameoverTargetCount();

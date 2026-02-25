@@ -30,7 +30,6 @@ namespace InGame.GameDebug.View
             MatrixLogWindow.Log("Game Over Debug/猶予時間", $"{currentGraceTime:F2} / {maxGraceTime:F2}");
             MatrixLogWindow.Log("Game Over Debug/進行度", maxGraceTime > 0 ? (currentGraceTime / maxGraceTime).ToString("P0") : "0%");
 
-            // 必要ならウィンドウを表示（初回のみなどの制御はお好みで）
             // MatrixLogWindow.ShowWindow(); 
 #endif
         }
@@ -51,7 +50,6 @@ namespace InGame.GameDebug.View
             }
 
             // --- 左上：デバッグボタン ---
-            // サイズをコンパクトにし、左上に配置
             GUILayout.BeginArea(new Rect(10, 10, 160, 260));
             GUILayout.BeginVertical("box");
 

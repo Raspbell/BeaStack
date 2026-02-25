@@ -36,7 +36,7 @@ namespace InGame.Model.Logic
             return tsumData.TsumEntities[randomIdx].ID;
         }
 
-        public int CalculateScore(List<Tsum> chain, List<Tsum> bombTargets, TsumData tsumData)
+        public long CalculateScore(List<Tsum> chain, List<Tsum> bombTargets, TsumData tsumData)
         {
             if (chain == null || chain.Count == 0)
             {
@@ -70,13 +70,17 @@ namespace InGame.Model.Logic
                 mainTsumId = _gameData.WildcardOnlyVirtualId;
             }
 
-            float chainLengthMultiplier = _gameData.ChainLengthBonusCurve.Evaluate(chain.Count);
-            float rankMultiplier = _gameData.TsumIdRankBonusCurve.Evaluate(mainTsumId);
+            // カーブの定義域端でClampして外挿を防ぐ
+            float clampedChainCount = Mathf.Clamp(chain.Count, 3f, 20f);
+            float clampedMainTsumId = Mathf.Clamp(mainTsumId, 0f, 10f);
+
+            float chainLengthMultiplier = _gameData.ChainLengthBonusCurve.Evaluate(clampedChainCount);
+            float rankMultiplier = _gameData.TsumIdRankBonusCurve.Evaluate(clampedMainTsumId);
 
             float wildcardBonusMultiplier = 1.0f;
             if (wildcardCount > 0)
             {
-                wildcardBonusMultiplier = 1.0f + (wildcardCount * _gameData.WildcardInvolvementBonusCurve.Evaluate(mainTsumId));
+                wildcardBonusMultiplier = 1.0f + (wildcardCount * _gameData.WildcardInvolvementBonusCurve.Evaluate(clampedMainTsumId));
             }
 
             float totalChainScore = baseChainScore * chainLengthMultiplier * rankMultiplier * wildcardBonusMultiplier;
@@ -96,7 +100,7 @@ namespace InGame.Model.Logic
                 totalBombScore = baseBombScore * _gameData.ExplosionScoreMultiplier;
             }
 
-            return Mathf.RoundToInt(totalChainScore + totalBombScore);
+            return (long)Mathf.Round(totalChainScore + totalBombScore);
         }
     }
 }

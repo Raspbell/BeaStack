@@ -2,6 +2,7 @@
   <Project Path="UniRx.csproj" />
   <Project Path="UniTask.csproj" />
   <Project Path="UniTask.Linq.csproj" />
+  <Project Path="unityroom.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="UniTask.Addressables.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />

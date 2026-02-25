@@ -23,11 +23,13 @@ public class GameLifetimeScope : LifetimeScope
     [SerializeField] private TsumSpawner _tsumSpawner;
     [SerializeField] private ReadyAnimationEvent _readyAnimationEvent;
     [SerializeField] private InputEventHandler _inputEventHandler;
-    [SerializeField] private GameDebugView _gameDebugView;
     [SerializeField] private ParticleSpawner _particleSpawner;
     [SerializeField] private ChainLineHandler _chainLineHandler;
     [SerializeField] private PhysicsBoundary _physicsBoundary;
     [SerializeField] private SEView _seView;
+
+    [Header("Debug")]
+    [SerializeField] private GameDebugView _gameDebugView;
 
     protected override void Configure(IContainerBuilder builder)
     {

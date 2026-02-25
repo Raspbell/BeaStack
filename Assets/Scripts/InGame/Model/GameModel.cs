@@ -7,7 +7,7 @@ namespace InGame.Model
     {
         public ReactiveProperty<GameState> CurrentGameState = new ReactiveProperty<GameState>(GameState.None);
         public FloatReactiveProperty TimeRemaining = new FloatReactiveProperty(0f);
-        public IntReactiveProperty Score = new IntReactiveProperty(0);
+        public LongReactiveProperty Score = new LongReactiveProperty(0L);
         public IntReactiveProperty SkillPoint = new IntReactiveProperty(0);
         public IntReactiveProperty FeverPoint = new IntReactiveProperty(0);
         public IntReactiveProperty CurrentTsumNum = new IntReactiveProperty(0);

@@ -515,7 +515,7 @@ namespace InGame.Model.Logic
                 }
             }
 
-            int score = _puzzleRule.CalculateScore(chainToResolve, bombTargets.ToList(), _tsumData);
+            long score = _puzzleRule.CalculateScore(chainToResolve, bombTargets.ToList(), _tsumData);
             _gameModel.Score.Value += score;
         }
 

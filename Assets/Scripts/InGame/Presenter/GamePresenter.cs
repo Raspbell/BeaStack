@@ -1,13 +1,14 @@
 using UnityEngine;
-using System;
+using unityroom.Api;
 using UniRx;
 using VContainer;
 using VContainer.Unity;
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using UnityEngine.SceneManagement;
+using System;
 
-using Initial;
+using Global;
 using InGame.Model;
 using InGame.Model.Logic;
 using InGame.Model.Interface;
@@ -162,6 +163,8 @@ namespace Presenter
             _tsumPhysicsManager.SetGameoverTargetByHeight(_physicsBoundary.DeadLineY);
             bool existTsumAboveDeadLine = _tsumPhysicsManager.ExistTsumAboveDeadLine(_physicsBoundary.DeadLineY);
             _gameUIView.UpdateDeadLineAlpha(_gameoverManager.GetGraceProgress(_gameData.GameOverGraceTime));
+
+            // ゲームオーバー判定
             if (_gameoverManager.IsGameover(Time.fixedDeltaTime, existTsumAboveDeadLine, _gameData.GameOverGraceTime))
             {
                 _gameModel.CurrentGameState.Value = GameModel.GameState.GameOver;
@@ -197,6 +200,9 @@ namespace Presenter
                                 _seView.PlayGameOverSound();
                                 await UniTask.Delay(2000);
                                 _gameUIView.ShowGameOver();
+
+                                // unityroomへのスコア送信
+                                UnityroomApiClient.Instance.SendScore(1, _gameModel.Score.Value, ScoreboardWriteMode.HighScoreDesc);
                                 break;
                             }
                     }
